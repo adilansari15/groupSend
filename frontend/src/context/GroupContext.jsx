@@ -136,6 +136,14 @@ export function GroupProvider({ children }) {
       refreshActiveGroupData();
     });
 
+    socket.on('expense_deletion_request:created', () => {
+      refreshActiveGroupData();
+    });
+
+    socket.on('expense_deletion_request:updated', () => {
+      refreshActiveGroupData();
+    });
+
     return () => {
       socket.off('group-notification');
       socket.off('expense:created');
@@ -143,6 +151,8 @@ export function GroupProvider({ children }) {
       socket.off('settlement:created');
       socket.off('settlement_request:created');
       socket.off('settlement_request:updated');
+      socket.off('expense_deletion_request:created');
+      socket.off('expense_deletion_request:updated');
       socket.disconnect();
     };
   }, [refreshActiveGroupData]);

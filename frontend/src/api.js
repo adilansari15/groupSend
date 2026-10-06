@@ -61,10 +61,14 @@ export const api = {
   getBalances: (groupId) => request(`/groups/${groupId}/balances`),
   getTransfers: (groupId) => request(`/groups/${groupId}/transfers`),
 
-  // Expenses
+  // Expenses & Peer-Approved Deletion
   getExpenses: (groupId) => request(`/groups/${groupId}/expenses`),
   createExpense: (groupId, data) => request(`/groups/${groupId}/expenses`, { method: 'POST', body: JSON.stringify(data) }),
   deleteExpense: (id) => request(`/expenses/${id}`, { method: 'DELETE' }),
+  getExpenseDeletionRequests: (groupId) => request(`/groups/${groupId}/expense-deletion-requests`),
+  requestExpenseDeletion: (groupId, expenseId, data = {}) => request(`/groups/${groupId}/expenses/${expenseId}/request-deletion`, { method: 'POST', body: JSON.stringify(data) }),
+  approveExpenseDeletion: (groupId, requestId) => request(`/groups/${groupId}/expense-deletion-requests/${requestId}/approve`, { method: 'POST' }),
+  rejectExpenseDeletion: (groupId, requestId, data = {}) => request(`/groups/${groupId}/expense-deletion-requests/${requestId}/reject`, { method: 'POST', body: JSON.stringify(data) }),
 
   // Settlements & Settlement Requests
   getSettlements: (groupId) => request(`/groups/${groupId}/settlements`),

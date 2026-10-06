@@ -56,6 +56,12 @@
   - Immutable `AuditLog` records for complete financial audit trail (`payment_created`, `payment_deleted`, `settlement_requested`, `settlement_approved`, `settlement_rejected`, `member_added`, `member_removed`).
   - Frontend Group Navigation tabs: Expenses, Members, Chat, Activity, Settlements with live auto-updating UI.
   - 40/40 automated unit, security, and integrity tests passing.
+- **Peer-Approved Expense Deletion System:**
+  - Multi-party `ExpenseDeletionRequest` workflow: unilateral expense deletion is disabled (HTTP 403) to prevent debt tampering.
+  - Strict anti-self-approval rule: requester cannot approve their own expense deletion.
+  - Peer member approval triggers physical removal of the `Expense` document, recalculation of balances, audit logging, and Socket.IO broadcast.
+  - Frontend Pending Deletion Approvals banner and modal on `Expenses.jsx` with instant real-time synchronization.
+  - 44/44 automated unit, security, and integrity tests passing.
 
 ## In progress
 - Ready for Phase 5: Ship (Production deployment to Render / Vercel + MongoDB Atlas)

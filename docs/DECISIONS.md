@@ -25,4 +25,5 @@
 | 2026-10-06 | Socket.IO room authentication & real-time chat | JWT handshake verification enforces identity; membership checks enforce authorized room joins; ChatMessage schema stores persistent group chats with member-only access |
 | 2026-10-06 | Multi-party peer settlement approval system | Eliminated unilateral settlement abuse. Requester creates SettlementRequest; requesters strictly forbidden from self-approving; at least one group peer must approve before debt balance updates and Settlement records are finalized |
 | 2026-10-06 | Immutable audit trail & live notifications | Real-time notifications and immutable AuditLog records capture payment creation, edits, deletions, settlement requests, approvals, and membership actions |
+| 2026-10-06 | Multi-party peer expense deletion approval system | Eliminated unilateral expense removal. Any deletion attempt creates an ExpenseDeletionRequest; requesters cannot self-approve; at least one group peer must approve before expense is deleted from DB and balance impact is updated; direct unilateral deletion returns HTTP 403 |
 

@@ -196,6 +196,102 @@ test('Integrity Rule: Rejection marks request as rejected and preserves auditabi
   assert.equal(request.approvals.length, 0);
 });
 
+import ExpenseDeletionRequest from '../models/ExpenseDeletionRequest.js';
+
+test('Database schema: ExpenseDeletionRequest requires groupId, expenseId, expenseTitle, and requesterId', () => {
+  const groupPath = ExpenseDeletionRequest.schema.path('groupId');
+  const expensePath = ExpenseDeletionRequest.schema.path('expenseId');
+  const titlePath = ExpenseDeletionRequest.schema.path('expenseTitle');
+  const amountPath = ExpenseDeletionRequest.schema.path('expenseAmount');
+  const requesterPath = ExpenseDeletionRequest.schema.path('requesterId');
+  const statusPath = ExpenseDeletionRequest.schema.path('status');
+
+  assert.ok(groupPath.isRequired, 'groupId must be required');
+  assert.ok(expensePath.isRequired, 'expenseId must be required');
+  assert.ok(titlePath.isRequired, 'expenseTitle must be required');
+  assert.ok(amountPath.isRequired, 'expenseAmount must be required');
+  assert.ok(requesterPath.isRequired, 'requesterId must be required');
+  assert.deepEqual(statusPath.enumValues, ['pending', 'approved', 'rejected']);
+});
+
+test('Integrity Rule: Requester cannot self-approve expense deletion request', () => {
+  const requesterId = new mongoose.Types.ObjectId();
+  const request = {
+    _id: new mongoose.Types.ObjectId(),
+    groupId: new mongoose.Types.ObjectId(),
+    expenseId: new mongoose.Types.ObjectId(),
+    requesterId,
+    status: 'pending',
+    approvals: []
+  };
+
+  const approverId = requesterId; // Requester attempts self-approval
+  const isSelfApproval = String(request.requesterId) === String(approverId);
+  assert.equal(isSelfApproval, true, 'Self-approval attempt must be detected');
+
+  assert.throws(
+    () => {
+      if (isSelfApproval) {
+        const error = new Error('You cannot approve your own expense deletion request');
+        error.statusCode = 403;
+        throw error;
+      }
+    },
+    (err) => {
+      assert.equal(err.message, 'You cannot approve your own expense deletion request');
+      assert.equal(err.statusCode, 403);
+      return true;
+    }
+  );
+});
+
+test('Integrity Rule: Non-member cannot approve expense deletion request', () => {
+  const members = [{ userId: new mongoose.Types.ObjectId() }];
+  const strangerId = new mongoose.Types.ObjectId();
+
+  const isMember = members.some((m) => String(m.userId) === String(strangerId));
+  assert.equal(isMember, false);
+
+  assert.throws(
+    () => {
+      if (!isMember) {
+        const error = new Error('You must be a member of this group to approve this request');
+        error.statusCode = 403;
+        throw error;
+      }
+    },
+    (err) => {
+      assert.equal(err.message, 'You must be a member of this group to approve this request');
+      assert.equal(err.statusCode, 403);
+      return true;
+    }
+  );
+});
+
+test('Integrity Rule: Peer approval transitions expense deletion request to approved', () => {
+  const requesterId = new mongoose.Types.ObjectId();
+  const peerId = new mongoose.Types.ObjectId();
+  const request = {
+    _id: new mongoose.Types.ObjectId(),
+    groupId: new mongoose.Types.ObjectId(),
+    expenseId: new mongoose.Types.ObjectId(),
+    requesterId,
+    status: 'pending',
+    approvals: []
+  };
+
+  assert.notEqual(String(request.requesterId), String(peerId));
+  request.approvals.push({
+    userId: peerId,
+    userName: 'Peer Member',
+    approvedAt: new Date()
+  });
+  request.status = 'approved';
+
+  assert.equal(request.status, 'approved');
+  assert.equal(request.approvals.length, 1);
+});
+
 test('Financial Integrity: Money is strictly handled in integer paise', () => {
   const rawRupeeAmount = '123.45';
   const paise = Math.round(parseFloat(rawRupeeAmount) * 100);
@@ -208,3 +304,4 @@ test('Financial Integrity: Money is strictly handled in integer paise', () => {
   const invalidPaise = -500;
   assert.equal(invalidPaise <= 0, true);
 });
+

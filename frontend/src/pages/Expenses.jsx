@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useGroup } from '../context/GroupContext.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 import { api } from '../api.js';
 import { formatRupees, formatDate, getCategoryColor } from '../utils/format.js';
 import {
@@ -10,7 +11,13 @@ import {
   ChevronDown,
   ChevronUp,
   PlusCircle,
-  Users
+  Users,
+  ShieldAlert,
+  CheckCircle,
+  XCircle,
+  Clock,
+  AlertTriangle,
+  X
 } from 'lucide-react';
 
 const CATEGORIES = ['All', 'Food', 'Travel', 'Rent', 'Shopping', 'Bills', 'Other'];
@@ -20,19 +27,66 @@ export default function Expenses() {
     activeGroup,
     expenses,
     refreshActiveGroupData,
-    setAddExpenseModalOpen
+    setAddExpenseModalOpen,
+    socket
   } = useGroup();
+  const { user } = useAuth();
 
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [expandedExpenseId, setExpandedExpenseId] = useState(null);
-  const [deletingId, setDeletingId] = useState(null);
+  const [deletionRequests, setDeletionRequests] = useState([]);
+  const [actionLoadingId, setActionLoadingId] = useState(null);
 
-  const memberNameMap = useMemo(() => {
+  // Request deletion modal state
+  const [targetExpenseForDeletion, setTargetExpenseForDeletion] = useState(null);
+  const [deletionReason, setDeletionReason] = useState('');
+  const [submittingRequest, setSubmittingRequest] = useState(false);
+  const [requestError, setRequestError] = useState(null);
+
+  const fetchDeletionRequests = useCallback(async () => {
+    if (!activeGroup?._id) {
+      setDeletionRequests([]);
+      return;
+    }
+    try {
+      const data = await api.getExpenseDeletionRequests(activeGroup._id);
+      setDeletionRequests(Array.isArray(data) ? data : []);
+    } catch (_err) {
+      // Ignored if user has no permission yet
+    }
+  }, [activeGroup?._id]);
+
+  useEffect(() => {
+    fetchDeletionRequests();
+  }, [fetchDeletionRequests]);
+
+  // Real-time socket sync for deletion requests
+  useEffect(() => {
+    if (!socket) return;
+    const handleSync = () => {
+      fetchDeletionRequests();
+    };
+    socket.on('expense_deletion_request:created', handleSync);
+    socket.on('expense_deletion_request:updated', handleSync);
+    socket.on('expense:deleted', handleSync);
+
+    return () => {
+      socket.off('expense_deletion_request:created', handleSync);
+      socket.off('expense_deletion_request:updated', handleSync);
+      socket.off('expense:deleted', handleSync);
+    };
+  }, [socket, fetchDeletionRequests]);
+
+  const pendingDeletionRequests = useMemo(() => {
+    return deletionRequests.filter((r) => r.status === 'pending');
+  }, [deletionRequests]);
+
+  const pendingDeletionMap = useMemo(() => {
     return Object.fromEntries(
-      (activeGroup?.members || []).map((m) => [String(m._id), m.name])
+      pendingDeletionRequests.map((r) => [String(r.expenseId), r])
     );
-  }, [activeGroup?.members]);
+  }, [pendingDeletionRequests]);
 
   const filteredExpenses = useMemo(() => {
     return expenses.filter((e) => {
@@ -43,18 +97,63 @@ export default function Expenses() {
     });
   }, [expenses, search, selectedCategory]);
 
-  const handleDeleteExpense = async (id, title) => {
-    if (!window.confirm(`Are you sure you want to delete "${title}"?`)) {
-      return;
-    }
+  const handleOpenDeletionModal = (expense) => {
+    setTargetExpenseForDeletion(expense);
+    setDeletionReason('');
+    setRequestError(null);
+  };
+
+  const handleCloseDeletionModal = () => {
+    setTargetExpenseForDeletion(null);
+    setDeletionReason('');
+    setRequestError(null);
+  };
+
+  const handleSubmitDeletionRequest = async (e) => {
+    e.preventDefault();
+    if (!targetExpenseForDeletion || !activeGroup?._id) return;
     try {
-      setDeletingId(id);
-      await api.deleteExpense(id);
+      setSubmittingRequest(true);
+      setRequestError(null);
+      await api.requestExpenseDeletion(activeGroup._id, targetExpenseForDeletion._id, {
+        reason: deletionReason
+      });
+      await fetchDeletionRequests();
+      await refreshActiveGroupData();
+      handleCloseDeletionModal();
+    } catch (err) {
+      setRequestError(err.message || 'Failed to submit deletion request');
+    } finally {
+      setSubmittingRequest(false);
+    }
+  };
+
+  const handleApproveDeletion = async (requestId) => {
+    if (!activeGroup?._id) return;
+    try {
+      setActionLoadingId(requestId);
+      await api.approveExpenseDeletion(activeGroup._id, requestId);
+      await fetchDeletionRequests();
       await refreshActiveGroupData();
     } catch (err) {
-      alert(`Failed to delete expense: ${err.message}`);
+      alert(`Approval failed: ${err.message}`);
     } finally {
-      setDeletingId(null);
+      setActionLoadingId(null);
+    }
+  };
+
+  const handleRejectDeletion = async (requestId) => {
+    if (!activeGroup?._id) return;
+    const reason = window.prompt('Optional reason for rejecting deletion:') || '';
+    try {
+      setActionLoadingId(requestId);
+      await api.rejectExpenseDeletion(activeGroup._id, requestId, { reason });
+      await fetchDeletionRequests();
+      await refreshActiveGroupData();
+    } catch (err) {
+      alert(`Rejection failed: ${err.message}`);
+    } finally {
+      setActionLoadingId(null);
     }
   };
 
@@ -93,6 +192,98 @@ export default function Expenses() {
         </button>
       </div>
 
+      {/* Pending Deletion Approvals Banner */}
+      {pendingDeletionRequests.length > 0 && (
+        <div
+          className="card"
+          style={{
+            background: 'var(--surface)',
+            border: '1.5px solid var(--warning, #f59e0b)',
+            padding: '16px 20px',
+            borderRadius: 'var(--radius-md)'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+            <h3 style={{ fontSize: '1rem', color: 'var(--warning, #f59e0b)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <ShieldAlert size={18} /> Pending Expense Deletion Approvals ({pendingDeletionRequests.length})
+            </h3>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>
+              Financial Integrity: At least one peer must approve before any entry is deleted
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {pendingDeletionRequests.map((req) => {
+              const isRequester = user && (String(req.requesterId) === String(user.id || user._id));
+              const isLoading = actionLoadingId === req._id;
+
+              return (
+                <div
+                  key={req._id}
+                  style={{
+                    background: 'var(--bg)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius-sm)',
+                    padding: '12px 16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '12px'
+                  }}
+                >
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <strong style={{ fontSize: '0.96rem', color: 'var(--text-main)' }}>{req.expenseTitle}</strong>
+                      <span className="badge" style={{ background: 'var(--danger-light, rgba(239, 68, 68, 0.15))', color: 'var(--danger)' }}>
+                        {formatRupees(req.expenseAmount)}
+                      </span>
+                    </div>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginTop: '2px' }}>
+                      Requested by <strong style={{ color: 'var(--text-main)' }}>{req.requesterName}</strong> • {formatDate(req.createdAt)}
+                    </span>
+                    {req.reason && (
+                      <p style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: '4px', fontStyle: 'italic' }}>
+                        Reason: "{req.reason}"
+                      </p>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {isRequester ? (
+                      <span className="badge" style={{ background: 'var(--surface-hover)', color: 'var(--warning, #f59e0b)', padding: '6px 12px' }}>
+                        <Clock size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+                        Your request — Awaiting peer approval
+                      </span>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-primary"
+                          style={{ background: 'var(--success, #10b981)', borderColor: 'var(--success, #10b981)' }}
+                          disabled={isLoading}
+                          onClick={() => handleApproveDeletion(req._id)}
+                        >
+                          <CheckCircle size={14} /> {isLoading ? 'Approving...' : 'Approve deletion'}
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-secondary"
+                          disabled={isLoading}
+                          onClick={() => handleRejectDeletion(req._id)}
+                        >
+                          <XCircle size={14} /> Reject
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Filter and Search Bar */}
       <div className="card" style={{ padding: '14px 18px', display: 'flex', flexWrap: 'wrap', gap: '14px', alignItems: 'center' }}>
         <div style={{ position: 'relative', flex: 1, minWidth: '220px' }}>
@@ -125,27 +316,42 @@ export default function Expenses() {
 
       {/* Expenses List */}
       {filteredExpenses.length === 0 ? (
-        <div className="card" style={{ textAlign: 'center', padding: '48px 20px', color: 'var(--text-muted)' }}>
-          <p style={{ fontSize: '1rem', fontWeight: '500' }}>No matching expenses</p>
-          <span style={{ fontSize: '0.82rem', color: 'var(--text-dim)', marginTop: '4px', display: 'block' }}>
-            Try adjusting your search filter or add a new expense.
-          </span>
+        <div className="card" style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}>
+          <Receipt size={40} style={{ opacity: 0.3, marginBottom: '12px' }} />
+          <p style={{ fontSize: '1rem', fontWeight: '500' }}>No expenses found</p>
+          <p style={{ fontSize: '0.85rem', marginTop: '4px' }}>
+            {search || selectedCategory !== 'All' ? 'Try adjusting your search filters' : 'Add the first group expense to get started'}
+          </p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {filteredExpenses.map((e) => {
-            const catColor = getCategoryColor(e.category);
             const isExpanded = expandedExpenseId === e._id;
-            const payerNames = (e.payments || []).map((p) => memberNameMap[p.memberId] || 'Member').join(', ');
+            const catColor = getCategoryColor(e.category);
+            const pendingReq = pendingDeletionMap[String(e._id)];
+
+            // Resolve payers display
+            const payerNames = (e.payments && e.payments.length > 0)
+              ? e.payments.map((p) => p.name || 'Member').join(', ')
+              : 'Unknown';
 
             return (
-              <div key={e._id} className="card" style={{ padding: '16px 20px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div
+                key={e._id}
+                className="card"
+                style={{
+                  padding: '16px 20px',
+                  transition: 'all var(--transition-fast)',
+                  border: pendingReq ? '1.5px dashed var(--warning, #f59e0b)' : '1px solid var(--border)'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '14px' }}>
+                  {/* Category icon and title */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: '220px' }}>
                     <div style={{
                       width: '42px',
                       height: '42px',
-                      borderRadius: 'var(--radius-md)',
+                      borderRadius: '12px',
                       background: `${catColor}15`,
                       color: catColor,
                       display: 'flex',
@@ -158,11 +364,24 @@ export default function Expenses() {
                     </div>
 
                     <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                         <h3 style={{ fontSize: '1.05rem', color: 'var(--text-main)' }}>{e.title}</h3>
                         <span className="badge" style={{ background: `${catColor}15`, color: catColor }}>
                           {e.category}
                         </span>
+                        {pendingReq && (
+                          <span
+                            className="badge"
+                            style={{
+                              background: 'var(--surface-hover)',
+                              color: 'var(--warning, #f59e0b)',
+                              border: '1px solid var(--warning, #f59e0b)',
+                              fontSize: '0.74rem'
+                            }}
+                          >
+                            ⚠️ Deletion requested by {pendingReq.requesterName} (Pending approval)
+                          </span>
+                        )}
                       </div>
                       <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '2px', display: 'block' }}>
                         Paid by <strong style={{ color: 'var(--text-main)' }}>{payerNames}</strong> • {formatDate(e.date)}
@@ -197,11 +416,11 @@ export default function Expenses() {
 
                     <button
                       id={`delete-expense-${e._id}`}
-                      onClick={() => handleDeleteExpense(e._id, e.title)}
+                      onClick={() => handleOpenDeletionModal(e)}
                       className="btn btn-danger btn-sm"
-                      style={{ padding: '6px', borderRadius: '50%' }}
-                      disabled={deletingId === e._id}
-                      title="Delete expense"
+                      style={{ padding: '6px', borderRadius: '50%', opacity: pendingReq ? 0.5 : 1 }}
+                      disabled={Boolean(pendingReq)}
+                      title={pendingReq ? 'Deletion already requested for peer review' : 'Request deletion for peer approval'}
                     >
                       <Trash2 size={16} />
                     </button>
@@ -262,6 +481,81 @@ export default function Expenses() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Request Expense Deletion Modal */}
+      {targetExpenseForDeletion && (
+        <div className="modal-backdrop">
+          <div className="modal-card" style={{ maxWidth: '480px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+              <h3 style={{ fontSize: '1.15rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <AlertTriangle size={20} color="var(--warning, #f59e0b)" /> Request expense deletion
+              </h3>
+              <button
+                type="button"
+                onClick={handleCloseDeletionModal}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: '14px', lineHeight: '1.4' }}>
+              To maintain financial integrity, deleting an expense requires approval from at least one group peer before balances are updated.
+            </p>
+
+            <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '12px 14px', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Expense Title</span>
+                <strong style={{ fontSize: '0.88rem', color: 'var(--text-main)' }}>{targetExpenseForDeletion.title}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Amount</span>
+                <strong style={{ fontSize: '0.96rem', color: 'var(--danger)' }}>{formatRupees(targetExpenseForDeletion.amount)}</strong>
+              </div>
+            </div>
+
+            {requestError && (
+              <div style={{ background: 'var(--danger-light, rgba(239, 68, 68, 0.1))', color: 'var(--danger)', padding: '10px 14px', borderRadius: 'var(--radius-sm)', fontSize: '0.84rem', marginBottom: '14px' }}>
+                {requestError}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmitDeletionRequest}>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', color: 'var(--text-main)', marginBottom: '6px' }}>
+                  Reason for deletion (optional)
+                </label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g. Duplicate entry, incorrect receipt, replaced bill"
+                  value={deletionReason}
+                  onChange={(e) => setDeletionReason(e.target.value)}
+                  maxLength={250}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={handleCloseDeletionModal}
+                  disabled={submittingRequest}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-danger"
+                  disabled={submittingRequest}
+                >
+                  {submittingRequest ? 'Submitting...' : 'Request deletion'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

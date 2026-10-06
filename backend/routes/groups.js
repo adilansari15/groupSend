@@ -20,6 +20,12 @@ import {
   approveSettlementRequest,
   rejectSettlementRequest
 } from '../controllers/settlementRequests.js';
+import {
+  listExpenseDeletionRequests,
+  createExpenseDeletionRequest,
+  approveExpenseDeletionRequest,
+  rejectExpenseDeletionRequest
+} from '../controllers/expenseDeletionRequests.js';
 import { requireAuth, optionalAuth } from '../middleware/auth.js';
 
 const r = Router();
@@ -39,6 +45,12 @@ r.get('/:id/transfers', getTransfers);
 // Group Expenses
 r.get('/:id/expenses', listExpenses);
 r.post('/:id/expenses', requireAuth, createExpense);
+
+// Expense Deletion Requests & Peer Approval Workflow
+r.get('/:id/expense-deletion-requests', requireAuth, listExpenseDeletionRequests);
+r.post('/:id/expenses/:expenseId/request-deletion', requireAuth, createExpenseDeletionRequest);
+r.post('/:id/expense-deletion-requests/:requestId/approve', requireAuth, approveExpenseDeletionRequest);
+r.post('/:id/expense-deletion-requests/:requestId/reject', requireAuth, rejectExpenseDeletionRequest);
 
 // Group Settlements
 r.get('/:id/settlements', listSettlements);

@@ -97,44 +97,10 @@ export async function deleteExpense(req, res, next) {
     const expense = await Expense.findById(req.params.id);
     if (!expense) return res.status(404).json({ error: 'Expense not found' });
 
-    const group = await Group.findById(expense.groupId);
-    if (group && group.ownerId) {
-      const requesterId = req.userId || req.user?._id;
-      if (requesterId) {
-        const isMemberOrOwner = String(group.ownerId) === String(requesterId) ||
-          group.members.some((m) => m.userId && String(m.userId) === String(requesterId));
-        if (!isMemberOrOwner) {
-          return res.status(403).json({ error: 'Unauthorized to delete expenses in this group' });
-        }
-      }
-    }
-
-    await Expense.findByIdAndDelete(expense._id);
-
-    const actorName = req.user?.name || 'Someone';
-    const rupeeAmount = (expense.amount / 100).toFixed(2).replace(/\.00$/, '');
-    const notificationMsg = `${actorName} deleted expense "${expense.title}" (₹${rupeeAmount})`;
-
-    await createAndBroadcastNotification({
-      groupId: expense.groupId,
-      type: 'expense_deleted',
-      actorId: req.user?._id || null,
-      actorName,
-      message: notificationMsg,
-      metadata: { expenseId: expense._id, title: expense.title }
+    // FINANCIAL INTEGRITY RULE: Unilateral deletion is disallowed. Peer approval is mandatory.
+    return res.status(403).json({
+      error: 'Unilateral deletion is disabled to maintain financial integrity. Please submit an expense deletion request for peer approval.'
     });
-
-    await recordAuditLog({
-      action: 'payment_deleted',
-      actorId: req.user?._id || null,
-      actorName,
-      groupId: expense.groupId,
-      payload: { expenseId: expense._id, title: expense.title, amount: expense.amount }
-    });
-
-    emitToGroup(expense.groupId, 'expense:deleted', expense._id);
-
-    res.json({ message: 'Expense deleted successfully', id: expense._id });
   } catch (err) {
     next(err);
   }
