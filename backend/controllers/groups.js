@@ -64,17 +64,27 @@ export async function validateVerifiedUser(identifier) {
 export const listGroups = async (req, res, next) => {
   try {
     const userId = req.user?._id || req.userId;
-    let query = {};
-    if (userId) {
-      // Find groups where user is owner or member
-      query = {
-        $or: [
-          { ownerId: userId },
-          { 'members.userId': userId }
-        ]
-      };
+    // Strict Privacy: Unauthenticated users / guests NEVER receive any groups
+    if (!userId) {
+      return res.json([]);
     }
-    const groups = await Group.find(query).sort('-createdAt');
+
+    let userEmail = req.user?.email?.toLowerCase();
+    if (!userEmail && userId) {
+      const u = await User.findById(userId);
+      if (u) userEmail = u.email.toLowerCase();
+    }
+
+    // Only return groups where the user is strictly an owner or member
+    const userOrConditions = [
+      { ownerId: userId },
+      { 'members.userId': userId }
+    ];
+    if (userEmail) {
+      userOrConditions.push({ 'members.email': userEmail });
+    }
+
+    const groups = await Group.find({ $or: userOrConditions }).sort('-createdAt');
     res.json(groups);
   } catch (err) {
     next(err);
@@ -83,9 +93,31 @@ export const listGroups = async (req, res, next) => {
 
 export async function getGroup(req, res, next) {
   try {
-    const group = await Group.findById(req.params.id);
+    const group = req.group || (await Group.findById(req.params.id));
     if (!group) return res.status(404).json({ error: 'Group not found' });
     res.json(group);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Safe preview for invitation links:
+ * Returns only name, description, and member count without private financial or debt data.
+ */
+export async function getGroupInvitePreview(req, res, next) {
+  try {
+    const group = await Group.findById(req.params.id);
+    if (!group) return res.status(404).json({ error: 'Group not found' });
+
+    res.json({
+      _id: group._id,
+      name: group.name,
+      description: group.description,
+      memberCount: group.members?.length || 0,
+      memberNames: (group.members || []).map((m) => m.name),
+      isInvite: true
+    });
   } catch (err) {
     next(err);
   }

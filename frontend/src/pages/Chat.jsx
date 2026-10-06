@@ -96,6 +96,14 @@ export default function Chat() {
     }
   };
 
+  if (!user) {
+    return (
+      <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}>
+        <p>Please log in to access group chat.</p>
+      </div>
+    );
+  }
+
   if (!activeGroup) {
     return (
       <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}>

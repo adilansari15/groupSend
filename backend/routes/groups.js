@@ -3,6 +3,7 @@ import {
   listGroups,
   createGroup,
   getGroup,
+  getGroupInvitePreview,
   deleteGroup,
   addMember,
   joinGroup,
@@ -26,51 +27,52 @@ import {
   approveExpenseDeletionRequest,
   rejectExpenseDeletionRequest
 } from '../controllers/expenseDeletionRequests.js';
-import { requireAuth, optionalAuth } from '../middleware/auth.js';
+import { requireAuth, optionalAuth, requireGroupMember } from '../middleware/auth.js';
 
 const r = Router();
 
 // Groups & Members
 r.get('/', optionalAuth, listGroups);
 r.post('/', requireAuth, createGroup);
-r.get('/:id', getGroup);
+r.get('/:id/invite', getGroupInvitePreview);
+r.get('/:id', requireGroupMember, getGroup);
 r.delete('/:id', requireAuth, deleteGroup);
 r.post('/:id/members', requireAuth, addMember);
 r.post('/:id/join', requireAuth, joinGroup);
 
-// Balances & Minimal Transfers
-r.get('/:id/balances', getBalances);
-r.get('/:id/transfers', getTransfers);
+// Balances & Minimal Transfers (Members Only)
+r.get('/:id/balances', requireGroupMember, getBalances);
+r.get('/:id/transfers', requireGroupMember, getTransfers);
 
-// Group Expenses
-r.get('/:id/expenses', listExpenses);
-r.post('/:id/expenses', requireAuth, createExpense);
+// Group Expenses (Members Only)
+r.get('/:id/expenses', requireGroupMember, listExpenses);
+r.post('/:id/expenses', requireGroupMember, createExpense);
 
-// Expense Deletion Requests & Peer Approval Workflow
-r.get('/:id/expense-deletion-requests', requireAuth, listExpenseDeletionRequests);
-r.post('/:id/expenses/:expenseId/request-deletion', requireAuth, createExpenseDeletionRequest);
-r.post('/:id/expense-deletion-requests/:requestId/approve', requireAuth, approveExpenseDeletionRequest);
-r.post('/:id/expense-deletion-requests/:requestId/reject', requireAuth, rejectExpenseDeletionRequest);
+// Expense Deletion Requests & Peer Approval Workflow (Members Only)
+r.get('/:id/expense-deletion-requests', requireGroupMember, listExpenseDeletionRequests);
+r.post('/:id/expenses/:expenseId/request-deletion', requireGroupMember, createExpenseDeletionRequest);
+r.post('/:id/expense-deletion-requests/:requestId/approve', requireGroupMember, approveExpenseDeletionRequest);
+r.post('/:id/expense-deletion-requests/:requestId/reject', requireGroupMember, rejectExpenseDeletionRequest);
 
-// Group Settlements
-r.get('/:id/settlements', listSettlements);
-r.post('/:id/settlements', requireAuth, createSettlement);
+// Group Settlements (Members Only)
+r.get('/:id/settlements', requireGroupMember, listSettlements);
+r.post('/:id/settlements', requireGroupMember, createSettlement);
 
-// Settlement Requests & Peer Approval Workflow
-r.get('/:id/settlement-requests', listSettlementRequests);
-r.post('/:id/settlement-requests', requireAuth, createSettlementRequest);
-r.post('/:id/settlement-requests/:requestId/approve', requireAuth, approveSettlementRequest);
-r.post('/:id/settlement-requests/:requestId/reject', requireAuth, rejectSettlementRequest);
+// Settlement Requests & Peer Approval Workflow (Members Only)
+r.get('/:id/settlement-requests', requireGroupMember, listSettlementRequests);
+r.post('/:id/settlement-requests', requireGroupMember, createSettlementRequest);
+r.post('/:id/settlement-requests/:requestId/approve', requireGroupMember, approveSettlementRequest);
+r.post('/:id/settlement-requests/:requestId/reject', requireGroupMember, rejectSettlementRequest);
 
-// Real-Time Group Chat
-r.get('/:id/chat', optionalAuth, listChatMessages);
-r.post('/:id/chat', requireAuth, sendChatMessage);
+// Real-Time Group Chat (Members Only)
+r.get('/:id/chat', requireGroupMember, listChatMessages);
+r.post('/:id/chat', requireGroupMember, sendChatMessage);
 
-// Notifications & Activity Feed
-r.get('/:id/notifications', listNotifications);
-r.get('/:id/activity', listActivity);
+// Notifications & Activity Feed (Members Only)
+r.get('/:id/notifications', requireGroupMember, listNotifications);
+r.get('/:id/activity', requireGroupMember, listActivity);
 
-// Group Reports
-r.get('/:id/reports', getReports);
+// Group Reports (Members Only)
+r.get('/:id/reports', requireGroupMember, getReports);
 
 export default r;

@@ -26,14 +26,28 @@ export function GroupProvider({ children }) {
   const fetchGroups = useCallback(async () => {
     try {
       setLoading(true);
+      const token = localStorage.getItem('groupspend_token');
+      if (!token) {
+        setGroups([]);
+        setActiveGroupState(null);
+        setBalances([]);
+        setTransfers([]);
+        setExpenses([]);
+        setSettlements([]);
+        setLoading(false);
+        return;
+      }
+
       const data = await api.getGroups();
-      setGroups(data);
+      setGroups(Array.isArray(data) ? data : []);
 
       const savedId = localStorage.getItem('groupspend_current_group_id');
-      const found = data.find((g) => g._id === savedId) || data[0] || null;
+      const found = (Array.isArray(data) ? data : []).find((g) => g._id === savedId) || data?.[0] || null;
       setActiveGroupState(found);
       if (found) {
         localStorage.setItem('groupspend_current_group_id', found._id);
+      } else {
+        localStorage.removeItem('groupspend_current_group_id');
       }
     } catch (err) {
       setError(err.message);
@@ -46,6 +60,8 @@ export function GroupProvider({ children }) {
     setActiveGroupState(group);
     if (group?._id) {
       localStorage.setItem('groupspend_current_group_id', group._id);
+    } else {
+      localStorage.removeItem('groupspend_current_group_id');
     }
   };
 
@@ -53,14 +69,14 @@ export function GroupProvider({ children }) {
     if (!activeGroup?._id) return;
     try {
       const [balData, transData, expData, setlData, grpData] = await Promise.all([
-        api.getBalances(activeGroup._id).catch(() => ({ members: [] })),
-        api.getTransfers(activeGroup._id).catch(() => []),
-        api.getExpenses(activeGroup._id).catch(() => []),
-        api.getSettlements(activeGroup._id).catch(() => []),
-        api.getGroup(activeGroup._id).catch(() => activeGroup)
+        api.getBalances(activeGroup._id),
+        api.getTransfers(activeGroup._id),
+        api.getExpenses(activeGroup._id),
+        api.getSettlements(activeGroup._id),
+        api.getGroup(activeGroup._id)
       ]);
 
-      setBalances(balData.members || []);
+      setBalances(balData?.members || []);
       setTransfers(transData || []);
       setExpenses(expData || []);
       setSettlements(setlData || []);
@@ -68,7 +84,15 @@ export function GroupProvider({ children }) {
         setActiveGroupState(grpData);
       }
     } catch (err) {
-      console.error('Error refreshing active group data:', err);
+      if (err.status === 401 || err.status === 403) {
+        // Not a member or not logged in: purge private group state immediately
+        setActiveGroupState(null);
+        setBalances([]);
+        setTransfers([]);
+        setExpenses([]);
+        setSettlements([]);
+      }
+      console.warn('Group access boundary:', err.message);
     }
   }, [activeGroup?._id]);
 

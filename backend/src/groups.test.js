@@ -139,3 +139,155 @@ test('Database schema: Group schema requires userId and email for all members an
   const ownerPath = Group.schema.path('ownerId');
   assert.equal(ownerPath.isRequired, true, 'Group.ownerId must be required');
 });
+
+// ==========================================
+// Tests for Group Privacy & Member Authorization
+// ==========================================
+
+import { requireGroupMember, signToken } from '../middleware/auth.js';
+import { getGroupInvitePreview } from '../controllers/groups.js';
+
+test('Privacy Rule: requireGroupMember rejects unauthenticated request with 401', async () => {
+  const req = { params: { id: 'group123' }, headers: {} };
+  let status = null;
+  let jsonBody = null;
+  const res = {
+    status: (s) => { status = s; return res; },
+    json: (b) => { jsonBody = b; return res; }
+  };
+  let nextCalled = false;
+
+  await requireGroupMember(req, res, () => { nextCalled = true; });
+
+  assert.equal(status, 401);
+  assert.match(jsonBody.error, /Authentication required/i);
+  assert.equal(nextCalled, false);
+});
+
+test('Privacy Rule: requireGroupMember rejects non-member with 403 Forbidden', async () => {
+  const nonMemberUser = {
+    _id: new mongoose.Types.ObjectId(),
+    email: 'stranger@example.com',
+    name: 'Stranger'
+  };
+
+  const group = {
+    _id: new mongoose.Types.ObjectId(),
+    name: 'Secret Group',
+    ownerId: new mongoose.Types.ObjectId(),
+    members: [
+      { userId: new mongoose.Types.ObjectId(), email: 'member@example.com', name: 'Member' }
+    ]
+  };
+
+  const origUserFindById = User.findById;
+  const origGroupFindById = Group.findById;
+  User.findById = () => ({
+    select: () => Promise.resolve(nonMemberUser)
+  });
+  Group.findById = () => Promise.resolve(group);
+
+  let status = null;
+  let jsonBody = null;
+  const res = {
+    status: (s) => { status = s; return res; },
+    json: (b) => { jsonBody = b; return res; }
+  };
+  let nextCalled = false;
+
+  const token = signToken(nonMemberUser);
+  const req = {
+    params: { id: String(group._id) },
+    headers: { authorization: `Bearer ${token}` }
+  };
+
+  try {
+    await requireGroupMember(req, res, () => { nextCalled = true; });
+    assert.equal(status, 403);
+    assert.match(jsonBody.error, /Access denied: You are not a member of this group/i);
+    assert.equal(nextCalled, false);
+  } finally {
+    User.findById = origUserFindById;
+    Group.findById = origGroupFindById;
+  }
+});
+
+test('Privacy Rule: requireGroupMember allows enrolled member and attaches group to req', async () => {
+  const memberUser = {
+    _id: new mongoose.Types.ObjectId(),
+    email: 'member@example.com',
+    name: 'Member'
+  };
+
+  const group = {
+    _id: new mongoose.Types.ObjectId(),
+    name: 'Private Room',
+    ownerId: new mongoose.Types.ObjectId(),
+    members: [
+      { userId: memberUser._id, email: 'member@example.com', name: 'Member' }
+    ]
+  };
+
+  const origUserFindById = User.findById;
+  const origGroupFindById = Group.findById;
+  User.findById = () => ({
+    select: () => Promise.resolve(memberUser)
+  });
+  Group.findById = () => Promise.resolve(group);
+
+  const token = signToken(memberUser);
+  const req = {
+    params: { id: String(group._id) },
+    headers: { authorization: `Bearer ${token}` }
+  };
+  const res = {
+    status: () => res,
+    json: () => res
+  };
+  let nextCalled = false;
+
+  try {
+    await requireGroupMember(req, res, () => { nextCalled = true; });
+    assert.equal(nextCalled, true);
+    assert.equal(req.group._id, group._id);
+  } finally {
+    User.findById = origUserFindById;
+    Group.findById = origGroupFindById;
+  }
+});
+
+test('Privacy Rule: getGroupInvitePreview exposes only public invite info and no balances or expenses', async () => {
+  const group = {
+    _id: new mongoose.Types.ObjectId(),
+    name: 'Safe Room',
+    description: 'A cozy group',
+    members: [
+      { userId: new mongoose.Types.ObjectId(), email: 'a@example.com', name: 'A' },
+      { userId: new mongoose.Types.ObjectId(), email: 'b@example.com', name: 'B' }
+    ],
+    expenses: [1, 2, 3],
+    balances: [100, -100]
+  };
+
+  const origGroupFindById = Group.findById;
+  Group.findById = () => Promise.resolve(group);
+
+  let jsonResult = null;
+  const req = { params: { id: String(group._id) } };
+  const res = {
+    json: (data) => { jsonResult = data; return res; },
+    status: () => res
+  };
+
+  try {
+    await getGroupInvitePreview(req, res);
+    assert.equal(jsonResult.name, 'Safe Room');
+    assert.equal(jsonResult.description, 'A cozy group');
+    assert.equal(jsonResult.memberCount, 2);
+    assert.equal(jsonResult.expenses, undefined, 'Expenses must not leak on invite preview');
+    assert.equal(jsonResult.balances, undefined, 'Balances must not leak on invite preview');
+  } finally {
+    Group.findById = origGroupFindById;
+  }
+});
+

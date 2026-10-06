@@ -21,7 +21,7 @@ export default function JoinGroup() {
     async function loadGroup() {
       try {
         setLoading(true);
-        const data = await api.getGroup(id);
+        const data = await api.getGroupInvitePreview(id).catch(() => api.getGroup(id));
         setGroup(data);
       } catch (err) {
         setError(err.message || 'Group not found');

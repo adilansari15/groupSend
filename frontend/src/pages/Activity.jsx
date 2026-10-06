@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useGroup } from '../context/GroupContext.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 import { api } from '../api.js';
 import {
   Activity as ActivityIcon,
@@ -63,6 +64,16 @@ export default function Activity() {
       socket.off('group-notification', handleNotification);
     };
   }, [socket, activeGroup?._id]);
+
+  const { user } = useAuth();
+
+  if (!user) {
+    return (
+      <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}>
+        <p>Please log in to view group activity.</p>
+      </div>
+    );
+  }
 
   if (!activeGroup) {
     return (

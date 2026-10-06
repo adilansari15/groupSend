@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useGroup } from '../context/GroupContext.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 import { api } from '../api.js';
 import { formatRupees, formatDate, getCategoryColor } from '../utils/format.js';
 import { PieChart as PieChartIcon, Calendar, TrendingUp, Download, Printer } from 'lucide-react';
@@ -7,6 +8,7 @@ import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 
 export default function Reports() {
   const { activeGroup } = useGroup();
+  const { user } = useAuth();
   const [period, setPeriod] = useState('monthly');
   const [reportData, setReportData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -27,6 +29,14 @@ export default function Reports() {
 
     return () => { isMounted = false; };
   }, [activeGroup?._id, period]);
+
+  if (!user) {
+    return (
+      <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}>
+        <p>Please log in to view reports.</p>
+      </div>
+    );
+  }
 
   if (!activeGroup) {
     return (

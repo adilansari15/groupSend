@@ -1,5 +1,6 @@
 import React from 'react';
 import { useGroup } from '../context/GroupContext.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 import { formatRupees, formatDate, getCategoryColor } from '../utils/format.js';
 import {
   Wallet,
@@ -9,7 +10,8 @@ import {
   ArrowRight,
   PlusCircle,
   TrendingUp,
-  Clock
+  Clock,
+  Shield
 } from 'lucide-react';
 
 export default function Home() {
@@ -22,6 +24,50 @@ export default function Home() {
     setAddExpenseModalOpen,
     setCreateGroupModalOpen
   } = useGroup();
+  const { user, openAuthModal } = useAuth();
+
+  if (!user) {
+    return (
+      <div style={{ textAlign: 'center', padding: '80px 20px', maxWidth: '520px', margin: '0 auto' }}>
+        <div style={{
+          width: '64px',
+          height: '64px',
+          borderRadius: '20px',
+          background: 'linear-gradient(135deg, #1f8a7a 0%, #157365 100%)',
+          color: '#ffffff',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: '20px',
+          boxShadow: '0 8px 20px var(--primary-glow)'
+        }}>
+          <Shield size={32} />
+        </div>
+        <h2 style={{ fontSize: '1.6rem', color: 'var(--text-main)', marginBottom: '12px' }}>
+          Private Shared Expenses
+        </h2>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.5', marginBottom: '24px' }}>
+          Group balances, expenses, and settlements are strictly confidential and only visible to enrolled group members.
+        </p>
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+          <button
+            onClick={() => openAuthModal('login')}
+            className="btn btn-primary"
+            style={{ padding: '10px 22px' }}
+          >
+            Log in to view your groups
+          </button>
+          <button
+            onClick={() => openAuthModal('register')}
+            className="btn btn-secondary"
+            style={{ padding: '10px 22px' }}
+          >
+            Sign up
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (!activeGroup) {
     return (

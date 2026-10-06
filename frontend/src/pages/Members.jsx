@@ -52,6 +52,14 @@ export default function Members() {
     };
   }, [searchQuery]);
 
+  if (!user) {
+    return (
+      <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}>
+        <p>Please log in to view group members.</p>
+      </div>
+    );
+  }
+
   if (!activeGroup) {
     return (
       <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}>

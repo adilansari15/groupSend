@@ -80,8 +80,10 @@ export function AuthProvider({ children }) {
       await api.logout();
     } catch (_ignored) {}
     localStorage.removeItem('groupspend_token');
+    localStorage.removeItem('groupspend_current_group_id');
     setToken(null);
     setUser(null);
+    window.location.reload();
   };
 
   const openAuthModal = (mode = 'login') => {

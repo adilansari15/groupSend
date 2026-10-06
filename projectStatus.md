@@ -61,10 +61,17 @@
   - Strict anti-self-approval rule: requester cannot approve their own expense deletion.
   - Peer member approval triggers physical removal of the `Expense` document, recalculation of balances, audit logging, and Socket.IO broadcast.
   - Frontend Pending Deletion Approvals banner and modal on `Expenses.jsx` with instant real-time synchronization.
-  - 44/44 automated unit, security, and integrity tests passing.
+- **Strict Group Privacy & Authorization (Zero-Leakage Architecture):**
+  - Gated all sensitive group endpoints behind `requireGroupMember` middleware: non-members and unauthenticated requests are strictly rejected with HTTP 401/403.
+  - Sensitive data strictly restricted to enrolled members: balances, minimal debt transfers, expenses, settlements, chat messages, activity feeds, and financial reports.
+  - Unauthenticated guests receive an empty group list (`[]`) from `GET /api/groups` instead of database leaks, completely preventing guest eavesdropping.
+  - Safe `GET /api/groups/:id/invite` preview endpoint returns only room name, description, and member count for joiners without exposing private financial balances or expenses.
+  - Frontend privacy gates installed across `Home`, `Expenses`, `Members`, `Settlements`, `Reports`, `Chat`, and `Activity` to display clean login welcome screens when unauthenticated.
+  - 48/48 automated unit, security, privacy, and integrity tests passing.
 
 ## In progress
 - Ready for Phase 5: Ship (Production deployment to Render / Vercel + MongoDB Atlas)
 
 ## Next action
 Deploy frontend on Vercel, backend on Render, connected to MongoDB Atlas.
+
