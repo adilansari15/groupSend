@@ -87,20 +87,20 @@ export function GroupProvider({ children }) {
     }
   }, [activeGroup?._id, refreshActiveGroupData]);
 
-  // Real-time socket setup
+  // Persistent real-time socket setup
   useEffect(() => {
-    const socketUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || window.location.origin;
+    const socketUrl = import.meta.env.VITE_SOCKET_URL ||
+      (import.meta.env.DEV ? 'http://localhost:5000' : (import.meta.env.VITE_API_URL?.replace(/\/api\/?$/, '') || window.location.origin));
     const token = localStorage.getItem('groupspend_token');
+
     const socket = io(socketUrl, {
-      transports: ['websocket', 'polling'],
+      transports: ['polling', 'websocket'],
       autoConnect: true,
-      auth: { token }
+      auth: { token },
+      reconnectionAttempts: 5,
+      timeout: 10000
     });
     socketRef.current = socket;
-
-    if (activeGroup?._id) {
-      socket.emit('join_group', activeGroup._id);
-    }
 
     socket.on('group-notification', (notif) => {
       refreshActiveGroupData();
@@ -137,12 +137,38 @@ export function GroupProvider({ children }) {
     });
 
     return () => {
-      if (activeGroup?._id) {
-        socket.emit('leave_group', activeGroup._id);
-      }
+      socket.off('group-notification');
+      socket.off('expense:created');
+      socket.off('expense:deleted');
+      socket.off('settlement:created');
+      socket.off('settlement_request:created');
+      socket.off('settlement_request:updated');
       socket.disconnect();
     };
-  }, [activeGroup?._id, refreshActiveGroupData]);
+  }, [refreshActiveGroupData]);
+
+  // Manage room subscription when active group changes
+  useEffect(() => {
+    const socket = socketRef.current;
+    if (!socket) return;
+
+    const currentGroupId = activeGroup?._id;
+    if (currentGroupId) {
+      if (socket.connected) {
+        socket.emit('join_group', currentGroupId);
+      } else {
+        socket.once('connect', () => {
+          socket.emit('join_group', currentGroupId);
+        });
+      }
+    }
+
+    return () => {
+      if (currentGroupId && socket.connected) {
+        socket.emit('leave_group', currentGroupId);
+      }
+    };
+  }, [activeGroup?._id]);
 
   const openSettleModal = (transfer = null) => {
     setSettlePrefill(transfer);
