@@ -16,10 +16,18 @@ async function request(endpoint, options = {}) {
   };
 
   const res = await fetch(url, config);
-  const data = await res.json().catch(() => ({}));
+  let data = {};
+  try {
+    data = await res.json();
+  } catch (_e) {
+    // Non-JSON response (e.g. Vite dev proxy 500/502 when backend is down)
+  }
 
   if (!res.ok) {
-    const error = new Error(data.error || `HTTP ${res.status}: Failed request`);
+    const defaultMsg = res.status >= 500
+      ? 'Backend server is unreachable. Please verify that the backend server is running on port 5000.'
+      : `Request failed (HTTP ${res.status})`;
+    const error = new Error(data.error || defaultMsg);
     error.status = res.status;
     error.requiresVerification = Boolean(data.requiresVerification);
     error.email = data.email;
