@@ -1,0 +1,1 @@
+Review the changes against AGENTS.md. Check: money in paise, input validation, settlement logic covered by tests, no secrets, error handling, UI copy style. List issues by severity with suggested fixes.
