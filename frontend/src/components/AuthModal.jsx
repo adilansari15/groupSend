@@ -69,7 +69,8 @@ export default function AuthModal() {
           email: targetEmail,
           code: code.trim()
         });
-        setSuccessMsg('Email verified successfully!');
+        await fetchGroups();
+        setSuccessMsg('Email verified successfully! Logging you in...');
         setTimeout(() => {
           closeAuthModal();
         }, 1200);
@@ -103,8 +104,7 @@ export default function AuthModal() {
         await fetchGroups();
       } else {
         await register(name.trim(), email.trim(), password);
-        await fetchGroups();
-        // Mode automatically shifts to 'verify' via AuthContext
+        // User is switched to 'verify' mode in modal
       }
     } catch (err) {
       setError(err.message);

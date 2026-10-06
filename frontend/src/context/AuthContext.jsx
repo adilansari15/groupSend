@@ -34,32 +34,38 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = async (email, password) => {
-    const res = await api.login({ email, password });
-    if (res?.token) {
-      localStorage.setItem('groupspend_token', res.token);
-      setToken(res.token);
-      setUser(res.user);
-      setAuthModalOpen(false);
+    try {
+      const res = await api.login({ email, password });
+      if (res?.token) {
+        localStorage.setItem('groupspend_token', res.token);
+        setToken(res.token);
+        setUser(res.user);
+        setAuthModalOpen(false);
+      }
+      return res;
+    } catch (err) {
+      if (err.requiresVerification) {
+        setPendingEmail(err.email || email);
+        setAuthModalMode('verify');
+      }
+      throw err;
     }
-    return res;
   };
 
   const register = async (name, email, password) => {
     const res = await api.register({ name, email, password });
-    if (res?.token) {
-      localStorage.setItem('groupspend_token', res.token);
-      setToken(res.token);
-      setUser(res.user);
-      setPendingEmail(email);
-      setAuthModalMode('verify');
-    }
+    // User must verify email before receiving token and accessing account
+    setPendingEmail(email);
+    setAuthModalMode('verify');
     return res;
   };
 
   const verifyEmail = async (data) => {
     const res = await api.verifyEmail(data);
-    if (res?.user) {
-      setUser((prev) => ({ ...(prev || {}), ...res.user, isVerified: true }));
+    if (res?.token) {
+      localStorage.setItem('groupspend_token', res.token);
+      setToken(res.token);
+      setUser(res.user);
       setAuthModalOpen(false);
     }
     return res;

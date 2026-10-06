@@ -20,3 +20,5 @@
 | 2026-10-06 | Group & expense deletion authorization checks | Fixed IDOR vulnerability by validating group owner/member identity |
 | 2026-10-06 | CSV formula injection sanitization | Prepend apostrophe to cells starting with [=,+,-,@,\t,\r] to protect spreadsheet viewers |
 | 2026-10-06 | Dual email verification (OTP + Link) via Nodemailer | Provides high-friction-free 6-digit code entry in-app or one-click verification from email link with automatic Ethereal fallback in development |
+| 2026-10-06 | Strict unverified login block & SHA-256 token hashing | Unverified users blocked with 403; verification tokens & OTPs stored as SHA-256 hashes; brute force OTP attempts lockout after 5 fails; HTML escaping in emails prevents stored XSS |
+

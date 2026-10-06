@@ -19,7 +19,11 @@ async function request(endpoint, options = {}) {
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
-    throw new Error(data.error || `HTTP ${res.status}: Failed request`);
+    const error = new Error(data.error || `HTTP ${res.status}: Failed request`);
+    error.status = res.status;
+    error.requiresVerification = Boolean(data.requiresVerification);
+    error.email = data.email;
+    throw error;
   }
 
   return data;
