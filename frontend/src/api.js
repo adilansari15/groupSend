@@ -38,6 +38,9 @@ export const api = {
   logout: () => request('/auth/logout', { method: 'POST' }),
   me: () => request('/auth/me'),
 
+  // Users Search
+  searchUsers: (query) => request(`/users/search?q=${encodeURIComponent(query)}`),
+
   // Groups
   getGroups: () => request('/groups'),
   createGroup: (data) => request('/groups', { method: 'POST', body: JSON.stringify(data) }),

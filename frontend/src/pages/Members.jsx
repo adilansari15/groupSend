@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useGroup } from '../context/GroupContext.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 import { api } from '../api.js';
 import { formatRupees } from '../utils/format.js';
-import { Users, UserPlus, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Users, UserPlus, CheckCircle2, AlertCircle, Search, ShieldCheck, Loader2 } from 'lucide-react';
 
 export default function Members() {
   const {
@@ -11,9 +12,45 @@ export default function Members() {
     refreshActiveGroupData
   } = useGroup();
 
-  const [newMemberName, setNewMemberName] = useState('');
+  const { user } = useAuth();
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  const searchTimeoutRef = useRef(null);
+
+  // Live search debouncing
+  useEffect(() => {
+    if (!searchQuery.trim() || searchQuery.trim().length < 2) {
+      setSearchResults([]);
+      setSearching(false);
+      return;
+    }
+
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    setSearching(true);
+    searchTimeoutRef.current = setTimeout(async () => {
+      try {
+        const results = await api.searchUsers(searchQuery.trim());
+        setSearchResults(results || []);
+      } catch (_err) {
+        setSearchResults([]);
+      } finally {
+        setSearching(false);
+      }
+    }, 280);
+
+    return () => {
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    };
+  }, [searchQuery]);
 
   if (!activeGroup) {
     return (
@@ -25,28 +62,34 @@ export default function Members() {
 
   const members = activeGroup.members || [];
   const balanceMap = Object.fromEntries(balances.map((b) => [b.memberId, b.netBalance]));
-
-  // Calculate sum of all net balances to verify the invariant (always 0)
   const sumBalances = Object.values(balanceMap).reduce((acc, v) => acc + v, 0);
 
-  const handleAddMember = async (e) => {
-    e.preventDefault();
-    const trimmed = newMemberName.trim();
-    if (!trimmed) {
-      setError('Member name is required');
-      return;
-    }
-    if (members.some((m) => m.name.toLowerCase() === trimmed.toLowerCase())) {
-      setError('A member with this name already exists');
+  const handleAddMember = async (candidate) => {
+    setError('');
+    setSuccessMsg('');
+
+    // Check if already in group
+    const alreadyInGroup = members.some(
+      (m) => String(m.userId) === String(candidate.id) || m.email?.toLowerCase() === candidate.email?.toLowerCase()
+    );
+
+    if (alreadyInGroup) {
+      setError(`"${candidate.name}" is already a member of this group`);
       return;
     }
 
     try {
       setSubmitting(true);
-      setError('');
-      await api.addMember(activeGroup._id, { name: trimmed });
-      setNewMemberName('');
+      await api.addMember(activeGroup._id, {
+        userId: candidate.id || candidate._id,
+        email: candidate.email
+      });
+
+      setSuccessMsg(`Added "${candidate.name}" to group`);
+      setSearchQuery('');
+      setSearchResults([]);
       await refreshActiveGroupData();
+      setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -84,10 +127,10 @@ export default function Members() {
         </div>
       </div>
 
-      {/* Add Member Card */}
-      <div className="card" style={{ padding: '18px 20px' }}>
+      {/* Add Member Card with Search */}
+      <div className="card" style={{ padding: '18px 20px', position: 'relative' }}>
         <h3 style={{ fontSize: '1rem', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <UserPlus size={18} color="var(--primary)" /> Add new member
+          <UserPlus size={18} color="var(--primary)" /> Add verified member
         </h3>
 
         {error && (
@@ -97,38 +140,143 @@ export default function Members() {
             padding: '8px 12px',
             borderRadius: 'var(--radius-sm)',
             fontSize: '0.84rem',
-            marginBottom: '12px'
+            marginBottom: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
           }}>
-            {error}
+            <AlertCircle size={16} />
+            <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleAddMember} style={{ display: 'flex', gap: '10px' }}>
+        {successMsg && (
+          <div style={{
+            background: 'var(--primary-light)',
+            color: 'var(--primary)',
+            padding: '8px 12px',
+            borderRadius: 'var(--radius-sm)',
+            fontSize: '0.84rem',
+            marginBottom: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}>
+            <CheckCircle2 size={16} />
+            <span>{successMsg}</span>
+          </div>
+        )}
+
+        <div style={{ position: 'relative', maxWidth: '440px' }}>
+          <Search size={16} color="var(--text-dim)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
           <input
-            id="new-member-name-input"
+            id="search-add-member-input"
             type="text"
             className="form-input"
-            placeholder="Enter friend or roommate's name..."
-            value={newMemberName}
-            onChange={(e) => {
-              setNewMemberName(e.target.value);
-              if (error) setError('');
-            }}
-            style={{ maxWidth: '360px' }}
-          />
-          <button
-            type="submit"
-            id="submit-new-member-btn"
-            className="btn btn-primary"
+            placeholder="Search registered & verified user by name or email..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             disabled={submitting}
-          >
-            {submitting ? 'Adding...' : 'Add member'}
-          </button>
-        </form>
+            style={{ paddingLeft: '36px', paddingRight: searching ? '36px' : '12px' }}
+          />
+          {searching && (
+            <Loader2 size={16} className="spin-icon" color="var(--primary)" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+          )}
+
+          {/* Search Results Dropdown */}
+          {searchQuery.trim().length >= 2 && (
+            <div style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              right: 0,
+              background: 'var(--card-bg)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-md)',
+              boxShadow: 'var(--shadow-md)',
+              marginTop: '4px',
+              maxHeight: '220px',
+              overflowY: 'auto',
+              zIndex: 10
+            }}>
+              {searchResults.length === 0 && !searching ? (
+                <div style={{ padding: '12px', fontSize: '0.85rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+                  No verified user found matching "{searchQuery}". Users must register and verify email first.
+                </div>
+              ) : (
+                searchResults.map((candidate) => {
+                  const alreadyMember = members.some(
+                    (m) => String(m.userId) === String(candidate.id) || m.email?.toLowerCase() === candidate.email?.toLowerCase()
+                  );
+
+                  return (
+                    <div
+                      key={candidate.id}
+                      onClick={() => !alreadyMember && handleAddMember(candidate)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '10px 14px',
+                        cursor: alreadyMember ? 'default' : 'pointer',
+                        opacity: alreadyMember ? 0.6 : 1,
+                        borderBottom: '1px solid var(--border)',
+                        transition: 'background 0.15s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!alreadyMember) e.currentTarget.style.background = 'var(--surface-hover)';
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!alreadyMember) e.currentTarget.style.background = 'transparent';
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '50%',
+                          background: 'var(--primary-light)',
+                          color: 'var(--primary)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontWeight: '700',
+                          fontSize: '0.85rem'
+                        }}>
+                          {candidate.name[0]?.toUpperCase()}
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--text-main)' }}>
+                            {candidate.name}
+                          </div>
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                            {candidate.email}
+                          </div>
+                        </div>
+                      </div>
+
+                      {alreadyMember ? (
+                        <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Already member</span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-primary"
+                          style={{ padding: '4px 10px', fontSize: '0.75rem' }}
+                        >
+                          Add to group
+                        </button>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Members Balance Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '14px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '14px' }}>
         {members.map((m) => {
           const net = balanceMap[String(m._id)] || 0;
           const isCreditor = net > 0;
@@ -162,7 +310,15 @@ export default function Members() {
                   {m.name[0]?.toUpperCase()}
                 </div>
                 <div>
-                  <h4 style={{ fontSize: '0.96rem', color: 'var(--text-main)' }}>{m.name}</h4>
+                  <h4 style={{ fontSize: '0.96rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    {m.name}
+                    <ShieldCheck size={14} color="var(--primary)" title="Verified user" />
+                  </h4>
+                  {m.email && (
+                    <div style={{ fontSize: '0.76rem', color: 'var(--text-dim)', marginBottom: '2px' }}>
+                      {m.email}
+                    </div>
+                  )}
                   <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                     {isCreditor ? 'Gets back' : isDebtor ? 'Owes group' : 'Settled up'}
                   </span>

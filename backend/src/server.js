@@ -10,6 +10,7 @@ import { initSocket } from './socket.js';
 import groups from '../routes/groups.js';
 import expenses from '../routes/expenses.js';
 import auth from '../routes/auth.js';
+import users from '../routes/users.js';
 import { errorHandler } from '../middleware/error.js';
 
 const app = express();
@@ -35,6 +36,7 @@ app.get('/api/health', (_req, res) => res.json({ ok: true, timestamp: new Date()
 app.use('/api/groups', groups);
 app.use('/api/expenses', expenses);
 app.use('/api/auth', auth);
+app.use('/api/users', users);
 
 app.use(errorHandler);
 

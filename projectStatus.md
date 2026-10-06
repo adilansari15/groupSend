@@ -42,7 +42,13 @@
   - Branded verification HTML email with 6-digit OTP code and direct activation link
   - Dual verification method support: OTP verification in `AuthModal` & one-click link at `/verify-email?token=...`
   - Resend verification code/link flow with status feedback
-  - Unit tests for OTP code generation & expiration logic (13/13 passing)
+  - Unit tests for OTP code generation & expiration logic
+- **Splitwise-Style Verified Member System:**
+  - Strict server-side validation rejecting unverified, fake, dummy, or non-existent member accounts
+  - Verified user autocomplete search endpoint (`GET /api/users/search`)
+  - Redesigned `CreateGroupModal` and `Members` page member pickers
+  - Replaced arbitrary free-text entry with live verified user search
+  - 30/30 automated unit and security tests passing
 
 ## In progress
 - Ready for Phase 5: Ship (Production deployment to Render / Vercel + MongoDB Atlas)

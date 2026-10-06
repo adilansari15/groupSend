@@ -21,4 +21,5 @@
 | 2026-10-06 | CSV formula injection sanitization | Prepend apostrophe to cells starting with [=,+,-,@,\t,\r] to protect spreadsheet viewers |
 | 2026-10-06 | Dual email verification (OTP + Link) via Nodemailer | Provides high-friction-free 6-digit code entry in-app or one-click verification from email link with automatic Ethereal fallback in development |
 | 2026-10-06 | Strict unverified login block & SHA-256 token hashing | Unverified users blocked with 403; verification tokens & OTPs stored as SHA-256 hashes; brute force OTP attempts lockout after 5 fails; HTML escaping in emails prevents stored XSS |
+| 2026-10-06 | Splitwise-style real & verified member enforcement | Group creation and member addition strictly enforce real, registered, email-verified accounts via GET /api/users/search and server-side validateVerifiedUser; dummy/arbitrary emails completely blocked |
 

@@ -12,17 +12,17 @@ import {
 import { listExpenses, createExpense } from '../controllers/expenses.js';
 import { listSettlements, createSettlement } from '../controllers/settlements.js';
 import { getReports } from '../controllers/reports.js';
-import { optionalAuth } from '../middleware/auth.js';
+import { requireAuth, optionalAuth } from '../middleware/auth.js';
 
 const r = Router();
 
 // Groups & Members
-r.get('/', listGroups);
-r.post('/', optionalAuth, createGroup);
+r.get('/', optionalAuth, listGroups);
+r.post('/', requireAuth, createGroup);
 r.get('/:id', getGroup);
-r.delete('/:id', optionalAuth, deleteGroup);
-r.post('/:id/members', addMember);
-r.post('/:id/join', optionalAuth, joinGroup);
+r.delete('/:id', requireAuth, deleteGroup);
+r.post('/:id/members', requireAuth, addMember);
+r.post('/:id/join', requireAuth, joinGroup);
 
 // Balances & Minimal Transfers
 r.get('/:id/balances', getBalances);
