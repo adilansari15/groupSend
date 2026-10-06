@@ -26,3 +26,12 @@ yarn-debug.log*
 yarn-error.log*
 .DS_Store
 Thumbs.db
+
+
+//md
+AGENTS.md,
+projectStatus.md,
+project.md,
+projectPlan.md,
+projectStatus.md,
+projectTest.md,
