@@ -3,9 +3,17 @@ import assert from 'node:assert/strict';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
 import { signToken } from '../middleware/auth.js';
 import { hashToken } from '../controllers/auth.js';
 import { escapeHtml } from './email.js';
+
+test('Database schema: User model contains isVerified, verificationToken, verificationTokenExpiry and indexes', () => {
+  assert.ok(User.schema.path('isVerified'), 'isVerified must exist in User schema');
+  assert.ok(User.schema.path('verificationTokenHash'), 'verificationTokenHash must exist in User schema');
+  assert.ok(User.schema.aliases['verificationToken'] || User.schema.path('verificationToken'), 'verificationToken alias or field must exist in User schema');
+  assert.ok(User.schema.path('verificationTokenExpiry'), 'verificationTokenExpiry must exist in User schema');
+});
 
 // ==========================================
 // 1. Password Hashing & JWT Tests

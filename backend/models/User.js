@@ -29,6 +29,7 @@ const userSchema = new mongoose.Schema({
   verificationTokenHash: {
     type: String,
     default: null,
+    alias: 'verificationToken',
     index: { sparse: true }
   },
   verificationCodeHash: {
