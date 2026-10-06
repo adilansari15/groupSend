@@ -26,7 +26,7 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider>
         <GroupProvider>
-          <BrowserRouter>
+          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <div className="app-container">
               <Sidebar />
 

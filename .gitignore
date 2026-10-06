@@ -28,10 +28,10 @@ yarn-error.log*
 Thumbs.db
 
 
-//md
-AGENTS.md,
-projectStatus.md,
-project.md,
-projectPlan.md,
-projectStatus.md,
-projectTest.md,
+# AI Agent / Project Documentation Files
+AGENTS.md
+README.md
+project.md
+projectContext.md
+projectPlan.md
+projectStatus.md
