@@ -9,9 +9,17 @@ import {
   getBalances,
   getTransfers
 } from '../controllers/groups.js';
-import { listExpenses, createExpense } from '../controllers/expenses.js';
+import { listExpenses, createExpense, deleteExpense } from '../controllers/expenses.js';
 import { listSettlements, createSettlement } from '../controllers/settlements.js';
 import { getReports } from '../controllers/reports.js';
+import { listChatMessages, sendChatMessage } from '../controllers/chat.js';
+import { listNotifications, listActivity } from '../controllers/activity.js';
+import {
+  listSettlementRequests,
+  createSettlementRequest,
+  approveSettlementRequest,
+  rejectSettlementRequest
+} from '../controllers/settlementRequests.js';
 import { requireAuth, optionalAuth } from '../middleware/auth.js';
 
 const r = Router();
@@ -30,11 +38,25 @@ r.get('/:id/transfers', getTransfers);
 
 // Group Expenses
 r.get('/:id/expenses', listExpenses);
-r.post('/:id/expenses', createExpense);
+r.post('/:id/expenses', requireAuth, createExpense);
 
 // Group Settlements
 r.get('/:id/settlements', listSettlements);
-r.post('/:id/settlements', createSettlement);
+r.post('/:id/settlements', requireAuth, createSettlement);
+
+// Settlement Requests & Peer Approval Workflow
+r.get('/:id/settlement-requests', listSettlementRequests);
+r.post('/:id/settlement-requests', requireAuth, createSettlementRequest);
+r.post('/:id/settlement-requests/:requestId/approve', requireAuth, approveSettlementRequest);
+r.post('/:id/settlement-requests/:requestId/reject', requireAuth, rejectSettlementRequest);
+
+// Real-Time Group Chat
+r.get('/:id/chat', optionalAuth, listChatMessages);
+r.post('/:id/chat', requireAuth, sendChatMessage);
+
+// Notifications & Activity Feed
+r.get('/:id/notifications', listNotifications);
+r.get('/:id/activity', listActivity);
 
 // Group Reports
 r.get('/:id/reports', getReports);

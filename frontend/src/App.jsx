@@ -18,6 +18,8 @@ import Members from './pages/Members.jsx';
 import Settlements from './pages/Settlements.jsx';
 import JoinGroup from './pages/JoinGroup.jsx';
 import VerifyEmail from './pages/VerifyEmail.jsx';
+import Chat from './pages/Chat.jsx';
+import Activity from './pages/Activity.jsx';
 
 export default function App() {
   return (
@@ -36,6 +38,8 @@ export default function App() {
                   <Route path="/reports" element={<Reports />} />
                   <Route path="/members" element={<Members />} />
                   <Route path="/settlements" element={<Settlements />} />
+                  <Route path="/chat" element={<Chat />} />
+                  <Route path="/activity" element={<Activity />} />
                   <Route path="/join/:id" element={<JoinGroup />} />
                   <Route path="/verify-email" element={<VerifyEmail />} />
                   <Route path="*" element={<Navigate to="/" replace />} />

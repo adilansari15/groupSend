@@ -58,9 +58,21 @@ export const api = {
   createExpense: (groupId, data) => request(`/groups/${groupId}/expenses`, { method: 'POST', body: JSON.stringify(data) }),
   deleteExpense: (id) => request(`/expenses/${id}`, { method: 'DELETE' }),
 
-  // Settlements
+  // Settlements & Settlement Requests
   getSettlements: (groupId) => request(`/groups/${groupId}/settlements`),
   createSettlement: (groupId, data) => request(`/groups/${groupId}/settlements`, { method: 'POST', body: JSON.stringify(data) }),
+  getSettlementRequests: (groupId) => request(`/groups/${groupId}/settlement-requests`),
+  createSettlementRequest: (groupId, data) => request(`/groups/${groupId}/settlement-requests`, { method: 'POST', body: JSON.stringify(data) }),
+  approveSettlementRequest: (groupId, requestId) => request(`/groups/${groupId}/settlement-requests/${requestId}/approve`, { method: 'POST' }),
+  rejectSettlementRequest: (groupId, requestId) => request(`/groups/${groupId}/settlement-requests/${requestId}/reject`, { method: 'POST' }),
+
+  // Real-Time Group Chat
+  getChat: (groupId) => request(`/groups/${groupId}/chat`),
+  sendChatMessage: (groupId, message) => request(`/groups/${groupId}/chat`, { method: 'POST', body: JSON.stringify({ message }) }),
+
+  // Notifications & Activity
+  getNotifications: (groupId) => request(`/groups/${groupId}/notifications`),
+  getActivity: (groupId) => request(`/groups/${groupId}/activity`),
 
   // Reports
   getReports: (groupId, period = 'monthly') => request(`/groups/${groupId}/reports?period=${period}`),

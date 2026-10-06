@@ -49,6 +49,13 @@
   - Redesigned `CreateGroupModal` and `Members` page member pickers
   - Replaced arbitrary free-text entry with live verified user search
   - 30/30 automated unit and security tests passing
+- **Real-Time Collaboration & Peer Settlement Approvals:**
+  - `ChatMessage` persistent schema, real-time Socket.IO room messaging (`join-group`, `leave-group`, `send-message`, `new-message`) with member-only access.
+  - Real-time `Notification` system across expense, settlement, and membership actions broadcasted via `group-notification`.
+  - Multi-party peer settlement request workflow (`SettlementRequest`) with strict prohibition on self-approval (HTTP 403), duplicate approval prevention, and peer authorization before balance updates.
+  - Immutable `AuditLog` records for complete financial audit trail (`payment_created`, `payment_deleted`, `settlement_requested`, `settlement_approved`, `settlement_rejected`, `member_added`, `member_removed`).
+  - Frontend Group Navigation tabs: Expenses, Members, Chat, Activity, Settlements with live auto-updating UI.
+  - 40/40 automated unit, security, and integrity tests passing.
 
 ## In progress
 - Ready for Phase 5: Ship (Production deployment to Render / Vercel + MongoDB Atlas)

@@ -4,6 +4,8 @@ import User from '../models/User.js';
 import Expense from '../models/Expense.js';
 import Settlement from '../models/Settlement.js';
 import { balances, transfers } from '../src/settlement.js';
+import { createAndBroadcastNotification } from '../src/socket.js';
+import { recordAuditLog } from '../src/audit.js';
 
 /**
  * Validates that a prospective group member is a real, registered, and email-verified user.
@@ -200,7 +202,8 @@ export async function addMember(req, res, next) {
 
     // Prevent duplicate members in group
     const isAlreadyMember = group.members.some(
-      (m) => String(m.userId) === String(validatedUser.userId) || m.email.toLowerCase() === validatedUser.email.toLowerCase()
+      (m) => (m.userId && String(m.userId) === String(validatedUser.userId)) ||
+             (m.email && m.email.toLowerCase() === validatedUser.email.toLowerCase())
     );
 
     if (isAlreadyMember) {
@@ -214,6 +217,23 @@ export async function addMember(req, res, next) {
     });
 
     await group.save();
+
+    await createAndBroadcastNotification({
+      groupId: group._id,
+      type: 'member_added',
+      actorId: req.user?._id || null,
+      actorName: req.user?.name || 'System',
+      message: `${validatedUser.name} joined the group`
+    });
+
+    await recordAuditLog({
+      action: 'member_added',
+      actorId: req.user?._id || null,
+      actorName: req.user?.name || 'System',
+      groupId: group._id,
+      payload: { memberName: validatedUser.name, memberEmail: validatedUser.email }
+    });
+
     res.status(201).json(group);
   } catch (err) {
     if (err.statusCode) {

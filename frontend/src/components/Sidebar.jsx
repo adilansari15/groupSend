@@ -15,7 +15,9 @@ import {
   Share2,
   LogIn,
   LogOut,
-  User
+  User,
+  MessageSquare,
+  Activity as ActivityIcon
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -217,6 +219,22 @@ export default function Sidebar() {
           style={{ justifyContent: 'flex-start', border: 'none' }}
         >
           <ArrowRightLeft size={18} /> Settlements
+        </NavLink>
+
+        <NavLink
+          to="/chat"
+          className={({ isActive }) => `btn ${isActive ? 'btn-primary' : 'btn-secondary'}`}
+          style={{ justifyContent: 'flex-start', border: 'none' }}
+        >
+          <MessageSquare size={18} /> Chat
+        </NavLink>
+
+        <NavLink
+          to="/activity"
+          className={({ isActive }) => `btn ${isActive ? 'btn-primary' : 'btn-secondary'}`}
+          style={{ justifyContent: 'flex-start', border: 'none' }}
+        >
+          <ActivityIcon size={18} /> Activity
         </NavLink>
       </nav>
 

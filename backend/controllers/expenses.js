@@ -1,7 +1,8 @@
 import Group from '../models/Group.js';
 import Expense from '../models/Expense.js';
 import { validateExpense } from '../src/settlement.js';
-import { emitToGroup } from '../src/socket.js';
+import { emitToGroup, createAndBroadcastNotification } from '../src/socket.js';
+import { recordAuditLog } from '../src/audit.js';
 
 export async function listExpenses(req, res, next) {
   try {
@@ -60,6 +61,29 @@ export async function createExpense(req, res, next) {
       shares
     });
 
+    const actorName = req.user?.name || 'Someone';
+    const rupeeAmount = (amount / 100).toFixed(2).replace(/\.00$/, '');
+    const notificationMsg = `${actorName} added ₹${rupeeAmount} for ${expense.title}`;
+
+    // Notification broadcast
+    await createAndBroadcastNotification({
+      groupId: group._id,
+      type: 'expense_created',
+      actorId: req.user?._id || null,
+      actorName,
+      message: notificationMsg,
+      metadata: { expenseId: expense._id, amount, title: expense.title }
+    });
+
+    // Immutable audit log
+    await recordAuditLog({
+      action: 'payment_created',
+      actorId: req.user?._id || null,
+      actorName,
+      groupId: group._id,
+      payload: { expenseId: expense._id, title: expense.title, amount, category }
+    });
+
     emitToGroup(group._id, 'expense:created', expense);
 
     res.status(201).json(expense);
@@ -77,7 +101,7 @@ export async function deleteExpense(req, res, next) {
     if (group && group.ownerId) {
       const requesterId = req.userId || req.user?._id;
       if (requesterId) {
-        const isMemberOrOwner = String(group.ownerId) === String(requesterId) || 
+        const isMemberOrOwner = String(group.ownerId) === String(requesterId) ||
           group.members.some((m) => m.userId && String(m.userId) === String(requesterId));
         if (!isMemberOrOwner) {
           return res.status(403).json({ error: 'Unauthorized to delete expenses in this group' });
@@ -86,6 +110,28 @@ export async function deleteExpense(req, res, next) {
     }
 
     await Expense.findByIdAndDelete(expense._id);
+
+    const actorName = req.user?.name || 'Someone';
+    const rupeeAmount = (expense.amount / 100).toFixed(2).replace(/\.00$/, '');
+    const notificationMsg = `${actorName} deleted expense "${expense.title}" (₹${rupeeAmount})`;
+
+    await createAndBroadcastNotification({
+      groupId: expense.groupId,
+      type: 'expense_deleted',
+      actorId: req.user?._id || null,
+      actorName,
+      message: notificationMsg,
+      metadata: { expenseId: expense._id, title: expense.title }
+    });
+
+    await recordAuditLog({
+      action: 'payment_deleted',
+      actorId: req.user?._id || null,
+      actorName,
+      groupId: expense.groupId,
+      payload: { expenseId: expense._id, title: expense.title, amount: expense.amount }
+    });
+
     emitToGroup(expense.groupId, 'expense:deleted', expense._id);
 
     res.json({ message: 'Expense deleted successfully', id: expense._id });

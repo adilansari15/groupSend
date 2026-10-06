@@ -90,15 +90,25 @@ export function GroupProvider({ children }) {
   // Real-time socket setup
   useEffect(() => {
     const socketUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || window.location.origin;
+    const token = localStorage.getItem('groupspend_token');
     const socket = io(socketUrl, {
       transports: ['websocket', 'polling'],
-      autoConnect: true
+      autoConnect: true,
+      auth: { token }
     });
     socketRef.current = socket;
 
     if (activeGroup?._id) {
       socket.emit('join_group', activeGroup._id);
     }
+
+    socket.on('group-notification', (notif) => {
+      refreshActiveGroupData();
+      if (notif?.message) {
+        setLiveNotification(notif.message);
+        setTimeout(() => setLiveNotification(null), 5000);
+      }
+    });
 
     socket.on('expense:created', (newExp) => {
       refreshActiveGroupData();
@@ -116,6 +126,14 @@ export function GroupProvider({ children }) {
       refreshActiveGroupData();
       setLiveNotification(`Payment recorded: ${newSetl.fromName || 'Member'} settled up`);
       setTimeout(() => setLiveNotification(null), 4000);
+    });
+
+    socket.on('settlement_request:created', () => {
+      refreshActiveGroupData();
+    });
+
+    socket.on('settlement_request:updated', () => {
+      refreshActiveGroupData();
     });
 
     return () => {
@@ -160,6 +178,7 @@ export function GroupProvider({ children }) {
         settlePrefill,
         openSettleModal,
         closeSettleModal,
+        socket: socketRef.current
       }}
     >
       {children}
