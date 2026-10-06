@@ -310,15 +310,10 @@ export default function Members() {
                   {m.name[0]?.toUpperCase()}
                 </div>
                 <div>
-                  <h4 style={{ fontSize: '0.96rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <h4 style={{ fontSize: '0.96rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
                     {m.name}
                     <ShieldCheck size={14} color="var(--primary)" title="Verified user" />
                   </h4>
-                  {m.email && (
-                    <div style={{ fontSize: '0.76rem', color: 'var(--text-dim)', marginBottom: '2px' }}>
-                      {m.email}
-                    </div>
-                  )}
                   <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                     {isCreditor ? 'Gets back' : isDebtor ? 'Owes group' : 'Settled up'}
                   </span>

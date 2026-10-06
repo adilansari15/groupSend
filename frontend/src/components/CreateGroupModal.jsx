@@ -338,7 +338,7 @@ export default function CreateGroupModal() {
                   className="badge badge-teal"
                   style={{ padding: '6px 12px', fontSize: '0.82rem', gap: '8px' }}
                 >
-                  <span>{m.name} <span style={{ opacity: 0.8, fontSize: '0.74rem' }}>({m.email})</span></span>
+                  <span>{m.name}</span>
                   <button
                     type="button"
                     onClick={() => handleRemoveMember(m.id)}
