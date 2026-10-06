@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 620" width="100%" height="100%">
+  <defs>
+    <linearGradient id="panelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+    <linearGradient id="tealGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0d9488" />
+      <stop offset="100%" stop-color="#14b8a6" />
+    </linearGradient>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2563eb" />
+      <stop offset="100%" stop-color="#38bdf8" />
+    </linearGradient>
+    <linearGradient id="purpleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#7c3aed" />
+      <stop offset="100%" stop-color="#a855f7" />
+    </linearGradient>
+    <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#059669" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#000000" flood-opacity="0.3" />
+    </filter>
+  </defs>
+
+  <rect width="1000" height="620" fill="#090d16" rx="16" />
+
+  <!-- Title -->
+  <text x="500" y="45" font-family="-apple-system, sans-serif" font-size="24" font-weight="700" fill="#f8fafc" text-anchor="middle">
+    GroupSpend Production Architecture &amp; Data Flow
+  </text>
+  <text x="500" y="70" font-family="-apple-system, sans-serif" font-size="13" font-weight="400" fill="#94a3b8" text-anchor="middle">
+    Dual-Channel Architecture: High-Throughput REST API + Real-Time WebSocket Rooms
+  </text>
+
+  <!-- Layer 1: Client Tier -->
+  <g transform="translate(50, 100)" filter="url(#shadow)">
+    <rect width="900" height="110" rx="12" fill="url(#panelGrad)" stroke="#334155" stroke-width="1.5" />
+    <rect x="0" y="0" width="8" height="110" fill="url(#tealGrad)" rx="4" />
+    <text x="30" y="32" font-family="-apple-system, sans-serif" font-size="16" font-weight="700" fill="#14b8a6">
+      🖥️ FRONTEND CLIENT (React 18 + Vite SPA)
+    </text>
+    
+    <!-- Sub-boxes -->
+    <rect x="30" y="45" width="200" height="50" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1" />
+    <text x="130" y="68" font-family="-apple-system, sans-serif" font-size="12" font-weight="600" fill="#f1f5f9" text-anchor="middle">GroupContext State</text>
+    <text x="130" y="85" font-family="-apple-system, sans-serif" font-size="10" fill="#94a3b8" text-anchor="middle">Optimistic UI &amp; Cache</text>
+
+    <rect x="250" y="45" width="200" height="50" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1" />
+    <text x="350" y="68" font-family="-apple-system, sans-serif" font-size="12" font-weight="600" fill="#38bdf8" text-anchor="middle">Socket.io Client</text>
+    <text x="350" y="85" font-family="-apple-system, sans-serif" font-size="10" fill="#94a3b8" text-anchor="middle">JWT Handshake Auth</text>
+
+    <rect x="470" y="45" width="200" height="50" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1" />
+    <text x="570" y="68" font-family="-apple-system, sans-serif" font-size="12" font-weight="600" fill="#34d399" text-anchor="middle">5 Core Views</text>
+    <text x="570" y="85" font-family="-apple-system, sans-serif" font-size="10" fill="#94a3b8" text-anchor="middle">Home • Expenses • Chat • Activity • Settle</text>
+
+    <rect x="690" y="45" width="180" height="50" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1" />
+    <text x="780" y="68" font-family="-apple-system, sans-serif" font-size="12" font-weight="600" fill="#fbbf24" text-anchor="middle">Integer UI Formatter</text>
+    <text x="780" y="85" font-family="-apple-system, sans-serif" font-size="10" fill="#94a3b8" text-anchor="middle">Paise ↔ ₹ Display Only</text>
+  </g>
+
+  <!-- Connectors Client -> Backend -->
+  <path d="M 270 210 L 270 260" stroke="#38bdf8" stroke-width="2.5" stroke-dasharray="4 4" />
+  <text x="280" y="240" font-family="-apple-system, sans-serif" font-size="11" font-weight="600" fill="#38bdf8">WSS Bidirectional</text>
+
+  <path d="M 680 210 L 680 260" stroke="#14b8a6" stroke-width="2.5" />
+  <text x="690" y="240" font-family="-apple-system, sans-serif" font-size="11" font-weight="600" fill="#14b8a6">HTTPS REST + Bearer JWT</text>
+
+  <!-- Layer 2: Application Tier -->
+  <g transform="translate(50, 260)" filter="url(#shadow)">
+    <rect width="900" height="150" rx="12" fill="url(#panelGrad)" stroke="#334155" stroke-width="1.5" />
+    <rect x="0" y="0" width="8" height="150" fill="url(#blueGrad)" rx="4" />
+    <text x="30" y="32" font-family="-apple-system, sans-serif" font-size="16" font-weight="700" fill="#38bdf8">
+      ⚙️ BACKEND ENGINE (Node.js + Express.js API Gateway)
+    </text>
+
+    <!-- Sub-components -->
+    <rect x="30" y="50" width="200" height="80" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1" />
+    <text x="130" y="75" font-family="-apple-system, sans-serif" font-size="13" font-weight="700" fill="#38bdf8" text-anchor="middle">Socket.IO Server</text>
+    <text x="130" y="95" font-family="-apple-system, sans-serif" font-size="10" fill="#cbd5e1" text-anchor="middle">Group Room Authorization</text>
+    <text x="130" y="112" font-family="-apple-system, sans-serif" font-size="10" fill="#94a3b8" text-anchor="middle">Instant Notifications &amp; Chat</text>
+
+    <rect x="250" y="50" width="200" height="80" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1" />
+    <text x="350" y="75" font-family="-apple-system, sans-serif" font-size="13" font-weight="700" fill="#34d399" text-anchor="middle">Pure Settlement Engine</text>
+    <text x="350" y="95" font-family="-apple-system, sans-serif" font-size="10" fill="#cbd5e1" text-anchor="middle">Greedy Debt Simplification</text>
+    <text x="350" y="112" font-family="-apple-system, sans-serif" font-size="10" fill="#94a3b8" text-anchor="middle">O(N log N) Minimal Transfers</text>
+
+    <rect x="470" y="50" width="200" height="80" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1" />
+    <text x="570" y="75" font-family="-apple-system, sans-serif" font-size="13" font-weight="700" fill="#f59e0b" text-anchor="middle">Settlement Rule Guard</text>
+    <text x="570" y="95" font-family="-apple-system, sans-serif" font-size="10" fill="#cbd5e1" text-anchor="middle">Self-Approval Rejected (403)</text>
+    <text x="570" y="112" font-family="-apple-system, sans-serif" font-size="10" fill="#94a3b8" text-anchor="middle">Multi-Party Peer Verification</text>
+
+    <rect x="690" y="50" width="180" height="80" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1" />
+    <text x="780" y="75" font-family="-apple-system, sans-serif" font-size="13" font-weight="700" fill="#a855f7" text-anchor="middle">Security &amp; Audit Engine</text>
+    <text x="780" y="95" font-family="-apple-system, sans-serif" font-size="10" fill="#cbd5e1" text-anchor="middle">Immutable Audit Logs</text>
+    <text x="780" y="112" font-family="-apple-system, sans-serif" font-size="10" fill="#94a3b8" text-anchor="middle">Rate Limiter &amp; XSS Escaping</text>
+  </g>
+
+  <!-- Connectors Backend -> Database -->
+  <path d="M 500 410 L 500 460" stroke="#a855f7" stroke-width="2.5" />
+  <text x="510" y="440" font-family="-apple-system, sans-serif" font-size="11" font-weight="600" fill="#a855f7">Mongoose ODM / TLS</text>
+
+  <!-- Layer 3: Persistence & External Tier -->
+  <g transform="translate(50, 460)" filter="url(#shadow)">
+    <rect width="900" height="120" rx="12" fill="url(#panelGrad)" stroke="#334155" stroke-width="1.5" />
+    <rect x="0" y="0" width="8" height="120" fill="url(#purpleGrad)" rx="4" />
+    <text x="30" y="32" font-family="-apple-system, sans-serif" font-size="16" font-weight="700" fill="#c084fc">
+      💾 PERSISTENCE &amp; EXTERNAL SERVICES
+    </text>
+
+    <!-- MongoDB Collections -->
+    <rect x="30" y="45" width="620" height="60" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1" />
+    <text x="45" y="70" font-family="-apple-system, sans-serif" font-size="12" font-weight="700" fill="#34d399">MongoDB Atlas Sharded Cluster:</text>
+    <text x="45" y="90" font-family="-apple-system, sans-serif" font-size="11" fill="#cbd5e1">
+      • Users • Groups • Expenses • Settlements • SettlementRequests • ChatMessages • Notifications • AuditLogs
+    </text>
+
+    <!-- Nodemailer / SMTP -->
+    <rect x="670" y="45" width="200" height="60" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1" />
+    <text x="770" y="70" font-family="-apple-system, sans-serif" font-size="12" font-weight="700" fill="#38bdf8" text-anchor="middle">Nodemailer SMTP</text>
+    <text x="770" y="88" font-family="-apple-system, sans-serif" font-size="10" fill="#94a3b8" text-anchor="middle">Gmail OAuth2 / Ethereal OTP</text>
+  </g>
+</svg>
