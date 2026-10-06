@@ -25,10 +25,10 @@ export function escapeHtml(str) {
 export async function getTransporter() {
   if (transporter) return transporter;
 
-  const gmailClientId = process.env.GMAIL_CLIENT_ID;
-  const gmailClientSecret = process.env.GMAIL_CLIENT_SECRET;
-  const gmailRefreshToken = process.env.GMAIL_REFRESH_TOKEN;
-  const gmailUser = process.env.GMAIL_USER || process.env.EMAIL_USER;
+  const gmailClientId = process.env.GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENt_ID || process.env.GMAIL_CLIENT_ID;
+  const gmailClientSecret = process.env.GOOGLE_CLIENT_SECRET || process.env.GMAIL_CLIENT_SECRET;
+  const gmailRefreshToken = process.env.GOOGLE_REFRESH_TOKEN || process.env.GMAIL_REFRESH_TOKEN;
+  const gmailUser = process.env.GOOGLE_USER || process.env.GMAIL_USER || process.env.EMAIL_USER;
 
   // 1. Gmail OAuth2 Configuration
   if (gmailClientId && gmailClientSecret && gmailRefreshToken && gmailUser) {
@@ -123,8 +123,10 @@ export async function sendVerificationEmail({ email, name, code, token }) {
     </div>
   `;
 
+  const fromAddress = process.env.EMAIL_FROM || process.env.GOOGLE_USER || process.env.GMAIL_USER || process.env.EMAIL_USER || 'no-reply@groupspend.com';
+
   const info = await mailClient.sendMail({
-    from: `"GroupSpend" <${process.env.EMAIL_FROM || process.env.EMAIL_USER || 'no-reply@groupspend.com'}>`,
+    from: `"GroupSpend" <${fromAddress}>`,
     to: email,
     subject: `Verify your email: ${code} is your GroupSpend code`,
     html,
