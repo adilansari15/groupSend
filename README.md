@@ -242,7 +242,7 @@ erDiagram
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/adilansari15/groupSend.git
+git clone https://github.com/adilansari15/groupSpend.git
 cd groupSend
 ```
 
