@@ -13,6 +13,7 @@ import {
   Clock,
   Shield
 } from 'lucide-react';
+import SEO from '../components/SEO.jsx';
 
 export default function Home() {
   const {
@@ -29,6 +30,7 @@ export default function Home() {
   if (!user) {
     return (
       <div style={{ textAlign: 'center', padding: '80px 20px', maxWidth: '520px', margin: '0 auto' }}>
+        <SEO title="Dashboard" canonicalPath="/" />
         <div style={{
           width: '64px',
           height: '64px',
@@ -114,6 +116,7 @@ export default function Home() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <SEO title="Dashboard" canonicalPath="/" />
       {/* Top Banner: Group Balance Status */}
       <div style={{
         background: 'linear-gradient(135deg, #1f8a7a 0%, #157365 100%)',

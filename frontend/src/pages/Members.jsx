@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { api } from '../api.js';
 import { formatRupees } from '../utils/format.js';
 import { Users, UserPlus, CheckCircle2, AlertCircle, Search, ShieldCheck, Loader2 } from 'lucide-react';
+import SEO from '../components/SEO.jsx';
 
 export default function Members() {
   const {
@@ -107,6 +108,7 @@ export default function Members() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <SEO title="Members" canonicalPath="/members" />
       {/* Top Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
         <div>

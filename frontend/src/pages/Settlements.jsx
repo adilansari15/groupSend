@@ -15,6 +15,7 @@ import {
   X,
   AlertCircle
 } from 'lucide-react';
+import SEO from '../components/SEO.jsx';
 
 export default function Settlements() {
   const {
@@ -101,6 +102,7 @@ export default function Settlements() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <SEO title="Settlements" canonicalPath="/settlements" />
       {/* Top Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
         <div>

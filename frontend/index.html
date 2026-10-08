@@ -5,11 +5,67 @@
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231f8a7a'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 14h-2v-2h2v2zm0-4h-2V7h2v5z'/></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="GroupSpend Web - Shared expense management for students, friends, and roommates. Track who paid what, net balances, and minimal settlement payments." />
+    <meta name="keywords" content="expense tracker, splitwise alternative, bill splitting, group expenses, debt settlement, peer payment, student budget" />
+    <meta name="theme-color" content="#1f8a7a" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <title>GroupSpend - Shared Expense Management</title>
-    <!-- Google Fonts: Plus Jakarta Sans & Outfit -->
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://groupspend.vercel.app/" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://groupspend.vercel.app/" />
+    <meta property="og:title" content="GroupSpend - Shared Expense Management" />
+    <meta property="og:description" content="Split expenses, track shared balances, and calculate minimal debt settlements for students, roommates, and groups." />
+    <meta property="og:site_name" content="GroupSpend" />
+
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="GroupSpend - Shared Expense Management" />
+    <meta name="twitter:description" content="Split expenses, track shared balances, and calculate minimal debt settlements for students, roommates, and groups." />
+
+    <!-- Google Fonts: Plus Jakarta Sans & Outfit with display=swap -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://groupspend.vercel.app/#website",
+          "url": "https://groupspend.vercel.app/",
+          "name": "GroupSpend",
+          "description": "Shared expense management and minimal debt settlement tracker.",
+          "inLanguage": "en-US"
+        },
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://groupspend.vercel.app/#app",
+          "name": "GroupSpend",
+          "applicationCategory": "FinanceApplication",
+          "operatingSystem": "All modern browsers",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          },
+          "description": "Simplify shared expense management, calculate minimal settlements, and streamline roommate group finances."
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://groupspend.vercel.app/#org",
+          "name": "GroupSpend",
+          "url": "https://groupspend.vercel.app/"
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -3,6 +3,7 @@ import { useGroup } from '../context/GroupContext.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { api } from '../api.js';
 import { MessageSquare, Send, Users, ShieldCheck, Sparkles } from 'lucide-react';
+import SEO from '../components/SEO.jsx';
 
 export default function Chat() {
   const { activeGroup, socket } = useGroup();
@@ -124,6 +125,7 @@ export default function Chat() {
       overflow: 'hidden',
       boxShadow: 'var(--shadow-sm)'
     }}>
+      <SEO title="Chat" canonicalPath="/chat" />
       {/* Chat Header */}
       <div style={{
         padding: '16px 20px',

@@ -19,6 +19,7 @@ import {
   AlertTriangle,
   X
 } from 'lucide-react';
+import SEO from '../components/SEO.jsx';
 
 const CATEGORIES = ['All', 'Food', 'Travel', 'Rent', 'Shopping', 'Bills', 'Other'];
 
@@ -179,6 +180,7 @@ export default function Expenses() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <SEO title="Expenses" canonicalPath="/expenses" />
       {/* Top Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
         <div>

@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   AlertCircle
 } from 'lucide-react';
+import SEO from '../components/SEO.jsx';
 
 export default function Activity() {
   const { activeGroup, socket } = useGroup();
@@ -118,6 +119,7 @@ export default function Activity() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <SEO title="Activity" canonicalPath="/activity" />
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
         <div>

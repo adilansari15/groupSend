@@ -5,6 +5,7 @@ import { api } from '../api.js';
 import { formatRupees, formatDate, getCategoryColor } from '../utils/format.js';
 import { PieChart as PieChartIcon, Calendar, TrendingUp, Download, Printer } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
+import SEO from '../components/SEO.jsx';
 
 export default function Reports() {
   const { activeGroup } = useGroup();
@@ -97,6 +98,7 @@ export default function Reports() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <SEO title="Reports" canonicalPath="/reports" />
       {/* Header & Period Tabs */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
         <div>
