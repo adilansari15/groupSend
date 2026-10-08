@@ -76,15 +76,19 @@
   - Documented feature in `README.md` with interactive UI mockup image (`assets/screenshots/chat-notifications.png`) and architecture diagram (`assets/diagrams/chat-notifications.svg`).
   - 50/50 automated unit, security, privacy, and integrity tests passing.
 
-- **Production Deployment Configuration (Render + Vercel):**
-  - Added `frontend/vercel.json` SPA rewrites rule for client-side routing.
-  - Enhanced `frontend/src/api.js` to automatically sanitize and normalize `VITE_API_URL` with or without trailing slash and `/api` path.
-  - Upgraded `backend/src/server.js` and `backend/src/email.js` CORS and client URL handling to support comma-separated origins, Vercel preview domains (`*.vercel.app`), and trimmed trailing slashes.
-  - 50/50 tests passing.
+- **Full-Stack Production Audit & Performance Optimization:**
+  - **Frontend Bundle & Code Splitting:** Replaced monolithic bundle (713.98 kB JS raw, 198 kB gzipped) with route-based `React.lazy()` and Rollup `manualChunks`. Initial entry JS bundle dropped to **62.54 kB** (15.04 kB gzipped), a **91.2% reduction**. Isolated heavy Recharts (224 kB) into `vendor-charts`, loaded exclusively on `/reports`.
+  - **Suspense & Error Boundaries:** Wrapped all routes in `<Suspense fallback={<RouteLoadingSkeleton />}>` and custom `<ErrorBoundary>` to eliminate layout shift and white-screen failures. Added custom, accessible `<NotFound>` 404 page.
+  - **Backend API & Network Compression:** Installed `compression` (gzip) and `helmet` security headers on Express server. Projected minimal fields in MongoDB queries (`.select('payments shares')`, `.select('from to amount')`), reducing payload weight and serialization overhead.
+  - **Database Index Optimization:** Added compound indexes to `Expense` (`{ groupId: 1, date: -1, createdAt: -1 }`), `Settlement` (`{ groupId: 1, date: -1 }`), and `Group` (`{ ownerId: 1, createdAt: -1 }`, `{ 'members.userId': 1 }`, `{ 'members.email': 1 }`). Reused `req.group` from `requireGroupMember` middleware to eliminate duplicate `findById` database queries.
+  - **SEO & Search Indexing:** Generated `robots.txt` and `sitemap.xml` in `/public`. Embedded OpenGraph tags, Twitter cards, canonical link, theme color, and JSON-LD structured data (`WebSite`, `SoftwareApplication`, `Organization`). Added dynamic `<SEO>` head updates per route.
+  - **Render Cold-Start UX:** Added background `/api/health` warm-up check with sleek top indicator when Render free tier instance takes >2.8s to spin up.
+  - **Accessibility (WCAG AA):** Adjusted text tokens for contrast compliance, added skip-to-content anchor, visible focus rings, skeleton shimmer loaders, and accessible ARIA labels on all navigation elements.
+  - 50/50 automated unit, security, and integrity tests passing.
 
 ## In progress
-- Phase 5: Production Deployment (Backend on Render, Frontend on Vercel)
+- Production verification on live deployments (https://groupspend.vercel.app and https://groupspend.onrender.com)
 
 ## Next action
-- Push code to GitHub repository and trigger Render and Vercel builds with required environment variables.
+- Deploy and verify live Lighthouse scores on Vercel and Render environments.
 

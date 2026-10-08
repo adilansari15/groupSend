@@ -34,5 +34,6 @@
 
 ## Phase 5: Ship
 - [x] Deploy (Vercel + Render + Atlas), env config
+- [x] Production audit and performance optimization (Route splitting, bundle optimization, SEO, A11y, DB indexes)
 - [ ] README with screenshots and live link
 - [ ] Add to resume and LinkedIn
