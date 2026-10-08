@@ -20,7 +20,7 @@ export default function BottomNav() {
   });
 
   return (
-    <nav className="bottom-nav">
+    <nav className="bottom-nav" aria-label="Mobile navigation">
       <NavLink to="/" style={navStyle}>
         <LayoutDashboard size={18} />
         <span>Home</span>

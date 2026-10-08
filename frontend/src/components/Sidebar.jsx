@@ -33,7 +33,7 @@ export default function Sidebar() {
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
 
   return (
-    <aside className="sidebar">
+    <aside className="sidebar" aria-label="Sidebar navigation">
       {/* Brand */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px', padding: '0 6px' }}>
         <div style={{
@@ -180,7 +180,7 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+      <nav aria-label="Sidebar main links" style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
         <NavLink
           to="/"
           className={({ isActive }) => `btn ${isActive ? 'btn-primary' : 'btn-secondary'}`}
