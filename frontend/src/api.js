@@ -92,4 +92,7 @@ export const api = {
 
   // Reports
   getReports: (groupId, period = 'monthly') => request(`/groups/${groupId}/reports?period=${period}`),
+
+  // Health / Cold-Start check
+  health: () => request('/health'),
 };

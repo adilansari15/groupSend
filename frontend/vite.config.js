@@ -16,5 +16,28 @@ export default defineConfig({
         changeOrigin: true
       }
     }
+  },
+  build: {
+    target: 'es2020',
+    cssCodeSplit: true,
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('recharts')) {
+              return 'vendor-charts';
+            }
+            if (id.includes('lucide-react')) {
+              return 'vendor-icons';
+            }
+            if (id.includes('socket.io-client')) {
+              return 'vendor-socket';
+            }
+            return 'vendor';
+          }
+        }
+      }
+    }
   }
 });
