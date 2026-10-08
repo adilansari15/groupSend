@@ -119,6 +119,41 @@ export function initSocket(io) {
 }
 
 /**
+ * Creates a system ChatMessage and broadcasts it as a `new-message` event
+ * so it appears in the group chat UI without any sender action.
+ */
+export async function postSystemChatMessage(groupId, text) {
+  if (!groupId || !text) return null;
+  try {
+    const chatMessage = await ChatMessage.create({
+      groupId,
+      senderId: null,
+      senderName: 'System',
+      message: text,
+      isSystem: true
+    });
+
+    const payload = {
+      _id: chatMessage._id,
+      groupId: chatMessage.groupId,
+      senderId: null,
+      senderName: 'System',
+      message: chatMessage.message,
+      isSystem: true,
+      createdAt: chatMessage.createdAt
+    };
+
+    if (ioInstance) {
+      ioInstance.to(`group:${groupId}`).emit('new-message', payload);
+    }
+    return chatMessage;
+  } catch (err) {
+    console.error('Failed to post system chat message:', err);
+    return null;
+  }
+}
+
+/**
  * Emits an event to all connected sockets in a group room.
  */
 export function emitToGroup(groupId, event, data) {

@@ -88,7 +88,10 @@ export async function getTransporter() {
  */
 export async function sendVerificationEmail({ email, name, code, token }) {
   const mailClient = await getTransporter();
-  const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+  const clientUrl = (process.env.CLIENT_URL || 'http://localhost:5173')
+    .split(',')[0]
+    .trim()
+    .replace(/\/+$/, '');
   const safeName = escapeHtml(name);
   const safeEmail = encodeURIComponent(email);
   const safeToken = encodeURIComponent(token);

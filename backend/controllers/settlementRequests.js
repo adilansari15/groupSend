@@ -1,7 +1,7 @@
 import Group from '../models/Group.js';
 import Settlement from '../models/Settlement.js';
 import SettlementRequest from '../models/SettlementRequest.js';
-import { emitToGroup, createAndBroadcastNotification } from '../src/socket.js';
+import { emitToGroup, createAndBroadcastNotification, postSystemChatMessage } from '../src/socket.js';
 import { recordAuditLog } from '../src/audit.js';
 
 export async function listSettlementRequests(req, res, next) {
@@ -90,6 +90,13 @@ export async function createSettlementRequest(req, res, next) {
     });
 
     emitToGroup(group._id, 'settlement_request:created', request);
+
+    // System chat message
+    const rupeeAmountChat = (amount / 100).toFixed(2).replace(/\.00$/, '');
+    await postSystemChatMessage(
+      group._id,
+      `💳 ${req.user.name} requested a settlement of ₹${rupeeAmountChat} (${memberMap[String(from)]} → ${memberMap[String(to)]})`
+    );
 
     res.status(201).json(request);
   } catch (err) {
@@ -204,6 +211,13 @@ export async function approveSettlementRequest(req, res, next) {
     emitToGroup(group._id, 'settlement:created', populatedSettlement);
     emitToGroup(group._id, 'settlement_request:updated', request);
 
+    // System chat message
+    const rupeeAmountChat2 = (request.amount / 100).toFixed(2).replace(/\.00$/, '');
+    await postSystemChatMessage(
+      group._id,
+      `✅ ${req.user.name} approved and completed a settlement of ₹${rupeeAmountChat2} (${request.fromName} → ${request.toName})`
+    );
+
     res.json({
       message: 'Settlement request approved and recorded successfully',
       request,
@@ -259,6 +273,13 @@ export async function rejectSettlementRequest(req, res, next) {
     });
 
     emitToGroup(group._id, 'settlement_request:updated', request);
+
+    // System chat message
+    const rupeeAmountChat3 = (request.amount / 100).toFixed(2).replace(/\.00$/, '');
+    await postSystemChatMessage(
+      group._id,
+      `❌ ${req.user.name} rejected the settlement request of ₹${rupeeAmountChat3} (${request.fromName} → ${request.toName})`
+    );
 
     res.json({ message: 'Settlement request rejected', request });
   } catch (err) {

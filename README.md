@@ -11,7 +11,7 @@
 [![MongoDB](https://img.shields.io/badge/MongoDB_Atlas-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
 [![Socket.io](https://img.shields.io/badge/Socket.io-010101?style=for-the-badge&logo=socketdotio&logoColor=white)](https://socket.io/)
 [![JWT](https://img.shields.io/badge/JWT_Auth-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)](https://jwt.io/)
-[![Tests](https://img.shields.io/badge/Tests-40%2F40_Passing-brightgreen?style=for-the-badge&logo=node.js&logoColor=white)](https://github.com/adilansari15/groupSend)
+[![Tests](https://img.shields.io/badge/Tests-50%2F50_Passing-brightgreen?style=for-the-badge&logo=node.js&logoColor=white)](https://github.com/adilansari15/groupSend)
 
 <br/>
 
@@ -29,6 +29,30 @@ Eliminating debt disputes with room-based WebSocket chat, greedy debt minimizati
 <div align="center">
   <img src="./assets/diagrams/ui-preview.svg" alt="GroupSpend Web UI Showcase" width="100%" />
 </div>
+
+---
+
+## 💬 In-Chat Real-Time Payment & Settlement Notifications
+
+<div align="center">
+  <img src="./assets/screenshots/chat-notifications.png" alt="Group Chat Financial Activity Feed Screenshot" width="100%" />
+</div>
+
+<br/>
+
+<div align="center">
+  <img src="./assets/diagrams/chat-notifications.svg" alt="Group Chat Financial Notifications Architecture" width="100%" />
+</div>
+
+### 🌟 Eliminating Context Switching in Group Expenses
+In traditional expense apps, group communication happens in separate messaging apps (WhatsApp, Telegram) while expenses live in another tool, causing disjointed discussions, forgotten payments, and settlement confusion.
+
+**GroupSpend Web unites conversational collaboration with automated financial tracking**:
+- 💸 **Instant Payment Announcement**: When any member adds an expense, a distinctive system badge immediately drops into the live group chat (e.g., `💸 Adil added a payment of ₹4,800 for "Beach Villa Booking"`).
+- 💳 **Settlement Request Notice**: When a member initiates a settlement, a dedicated peer-review badge is posted (e.g., `💳 Rahul requested a settlement of ₹1,200 (Rahul → Adil)`).
+- ✅ **Peer Approval & Settlement Completion**: When an authorized peer verifies and approves the transaction, an approval card announces completion (e.g., `✅ Sara approved and completed a settlement of ₹1,200 (Rahul → Adil)`), and minimal debt transfers update live.
+- ❌ **Rejection Transparency**: If a fraudulent or mistaken request is rejected, the group is notified immediately to maintain complete group trust.
+- ⚡ **Under the Hood**: Powered by `postSystemChatMessage()` in `backend/src/socket.js`, persisting audit-safe `isSystem: true` chat messages and broadcasting them via Socket.IO `new-message` events to the isolated `group:${groupId}` room.
 
 ---
 
@@ -50,10 +74,10 @@ Splitting bills among roommates, students, and trip groups is often ruined by:
 
 ## ⚡ Core Features
 
-### 💬 1. Real-Time Group Chat
+### 💬 1. Real-Time Group Chat & In-Feed Financial Activity
 - **Room Isolation**: Automatically bounds chat traffic to authenticated group rooms (`group:${groupId}`).
 - **Persistent Message Store**: Chat history preserved in MongoDB with index `{ groupId: 1, createdAt: 1 }`.
-- **System Events & User Messages**: Distinguishes user messages from automated financial system notices.
+- **Automated Financial System Events**: Every payment added, settlement requested, and peer approval drops an interactive, stylized badge directly into the group conversation in real-time.
 - **Zero Eavesdropping**: Socket handshake verifies JWT signature and validates that the user is an active group member before granting room admission.
 
 ### 🔔 2. Instant Payment Notifications
@@ -296,7 +320,7 @@ cd backend
 npm test
 ```
 
-### Test Suite Results (40 / 40 Passing):
+### Test Suite Results (50 / 50 Passing):
 ```text
 TAP version 13
 ok 1 - Database schema: User model contains isVerified, verificationToken, verificationTokenExpiry and indexes
@@ -319,29 +343,39 @@ ok 17 - FAIL: Unverified user is rejected with "User must verify email first"
 ok 18 - FAIL: Duplicate member in group is rejected
 ok 19 - PASS: User search query regex filters and returns only verified users
 ok 20 - Database schema: Group schema requires userId and email for all members and requires ownerId
-ok 21 - Database schema: ChatMessage model requires groupId, senderName, and message with proper indexing
-ok 22 - Database schema: Notification model requires groupId, type, actorName, and message
-ok 23 - Database schema: AuditLog model requires action, actorName, and groupId with timestamp
-ok 24 - Database schema: SettlementRequest model requires groupId, requesterId, and amount in paise
-ok 25 - Integrity Rule: Requester cannot self-approve settlement request
-ok 26 - Integrity Rule: Non-member cannot approve settlement request
-ok 27 - Integrity Rule: Duplicate approval by same peer is prevented
-ok 28 - Integrity Rule: Peer approval transitions status to approved with audit log and settlement creation
-ok 29 - Integrity Rule: Rejection marks request as rejected and preserves auditability
-ok 30 - Financial Integrity: Money is strictly handled in integer paise
-ok 31 - Scenario 1: 4 members, ₹1,000 equal split (screenshot case)
-ok 32 - Scenario 2: One payer, everyone else owes equal share
-ok 33 - Scenario 3: Everyone paid exactly their share
-ok 34 - Scenario 4: ₹100 split among 3 (shares 33.34 / 33.33 / 33.33)
-ok 35 - Scenario 5: Custom split where shares sum to the total
-ok 36 - Scenario 6: Custom split where shares do not sum to total is rejected
-ok 37 - Scenario 7: Partial settlement recorded reduces transfer amount
-ok 38 - Scenario 8: Full settlement recorded leaves 0 pending settlements
-ok 39 - Scenario 9: Sum of all net balances is always 0
-ok 40 - Scenario 10: Number of transfers is at most (members - 1)
-1..40
-# tests 40
-# pass 40
+ok 21 - Privacy Rule: requireGroupMember rejects unauthenticated request with 401
+ok 22 - Privacy Rule: requireGroupMember rejects non-member with 403 Forbidden
+ok 23 - Privacy Rule: requireGroupMember allows enrolled member and attaches group to req
+ok 24 - Privacy Rule: getGroupInvitePreview exposes only public invite info and no balances or expenses
+ok 25 - Database schema: ChatMessage model requires groupId, senderName, and message with proper indexing
+ok 26 - Database schema: Notification model requires groupId, type, actorName, and message
+ok 27 - Database schema: AuditLog model requires action, actorName, and groupId with timestamp
+ok 28 - Database schema: SettlementRequest model requires groupId, requesterId, and amount in paise
+ok 29 - Integrity Rule: Requester cannot self-approve settlement request
+ok 30 - Integrity Rule: Non-member cannot approve settlement request
+ok 31 - Integrity Rule: Duplicate approval by same peer is prevented
+ok 32 - Integrity Rule: Peer approval transitions status to approved with audit log and settlement creation
+ok 33 - Integrity Rule: Rejection marks request as rejected and preserves auditability
+ok 34 - Database schema: ExpenseDeletionRequest requires groupId, expenseId, expenseTitle, and requesterId
+ok 35 - Integrity Rule: Requester cannot self-approve expense deletion request
+ok 36 - Integrity Rule: Non-member cannot approve expense deletion request
+ok 37 - Integrity Rule: Peer approval transitions expense deletion request to approved
+ok 38 - Financial Integrity: Money is strictly handled in integer paise
+ok 39 - Database schema: ChatMessage model supports isSystem flag with false default
+ok 40 - Chat Financial Notifications: System message format for payment and settlement events
+ok 41 - Scenario 1: 4 members, ₹1,000 equal split (screenshot case)
+ok 42 - Scenario 2: One payer, everyone else owes equal share
+ok 43 - Scenario 3: Everyone paid exactly their share
+ok 44 - Scenario 4: ₹100 split among 3 (shares 33.34 / 33.33 / 33.33)
+ok 45 - Scenario 5: Custom split where shares sum to the total
+ok 46 - Scenario 6: Custom split where shares do not sum to total is rejected
+ok 47 - Scenario 7: Partial settlement recorded reduces transfer amount
+ok 48 - Scenario 8: Full settlement recorded leaves 0 pending settlements
+ok 49 - Scenario 9: Sum of all net balances is always 0
+ok 50 - Scenario 10: Number of transfers is at most (members - 1)
+1..50
+# tests 50
+# pass 50
 # fail 0
 ```
 

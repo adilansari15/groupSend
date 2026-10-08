@@ -33,6 +33,6 @@
 - [ ] Optional PWA for offline use
 
 ## Phase 5: Ship
-- [ ] Deploy (Vercel + Render + Atlas), env config
+- [x] Deploy (Vercel + Render + Atlas), env config
 - [ ] README with screenshots and live link
 - [ ] Add to resume and LinkedIn

@@ -68,10 +68,23 @@
   - Safe `GET /api/groups/:id/invite` preview endpoint returns only room name, description, and member count for joiners without exposing private financial balances or expenses.
   - Frontend privacy gates installed across `Home`, `Expenses`, `Members`, `Settlements`, `Reports`, `Chat`, and `Activity` to display clean login welcome screens when unauthenticated.
   - 48/48 automated unit, security, privacy, and integrity tests passing.
+- **System Chat Notifications for Payments & Settlements:**
+  - `postSystemChatMessage()` helper added to `backend/src/socket.js`: creates a persisted `ChatMessage` with `isSystem: true` and broadcasts it as `new-message` to the group room.
+  - Automatic system messages posted in group chat when: expense added (💸), direct settlement recorded (✅), settlement request created (💳), settlement request approved (✅), settlement request rejected (❌).
+  - Messages appear in the Chat tab in the existing styled pill format with no frontend changes required.
+  - `settlements.js` also gains `createAndBroadcastNotification` and `recordAuditLog` coverage (previously missing).
+  - Documented feature in `README.md` with interactive UI mockup image (`assets/screenshots/chat-notifications.png`) and architecture diagram (`assets/diagrams/chat-notifications.svg`).
+  - 50/50 automated unit, security, privacy, and integrity tests passing.
+
+- **Production Deployment Configuration (Render + Vercel):**
+  - Added `frontend/vercel.json` SPA rewrites rule for client-side routing.
+  - Enhanced `frontend/src/api.js` to automatically sanitize and normalize `VITE_API_URL` with or without trailing slash and `/api` path.
+  - Upgraded `backend/src/server.js` and `backend/src/email.js` CORS and client URL handling to support comma-separated origins, Vercel preview domains (`*.vercel.app`), and trimmed trailing slashes.
+  - 50/50 tests passing.
 
 ## In progress
-- Ready for Phase 5: Ship (Production deployment to Render / Vercel + MongoDB Atlas)
+- Phase 5: Production Deployment (Backend on Render, Frontend on Vercel)
 
 ## Next action
-Deploy frontend on Vercel, backend on Render, connected to MongoDB Atlas.
+- Push code to GitHub repository and trigger Render and Vercel builds with required environment variables.
 

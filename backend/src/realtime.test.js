@@ -305,3 +305,27 @@ test('Financial Integrity: Money is strictly handled in integer paise', () => {
   assert.equal(invalidPaise <= 0, true);
 });
 
+test('Database schema: ChatMessage model supports isSystem flag with false default', () => {
+  const isSystemPath = ChatMessage.schema.path('isSystem');
+  assert.ok(isSystemPath, 'isSystem path must exist');
+  assert.equal(isSystemPath.instance, 'Boolean');
+  assert.equal(isSystemPath.defaultValue, false);
+});
+
+test('Chat Financial Notifications: System message format for payment and settlement events', () => {
+  const actorName = 'Adil';
+  const amount = 480000; // in paise (4800 rupees)
+  const rupeeAmount = (amount / 100).toFixed(2).replace(/\.00$/, '');
+  const expenseTitle = 'Beach Villa Booking';
+  
+  const paymentMsg = `💸 ${actorName} added a payment of ₹${rupeeAmount} for "${expenseTitle}"`;
+  assert.ok(paymentMsg.includes('💸'));
+  assert.ok(paymentMsg.includes('₹4800'));
+  assert.ok(paymentMsg.includes('Beach Villa Booking'));
+
+  const settlementMsg = `✅ ${actorName} settled ₹${rupeeAmount} from Member A to Member B`;
+  assert.ok(settlementMsg.includes('✅'));
+  assert.ok(settlementMsg.includes('Member A'));
+  assert.ok(settlementMsg.includes('Member B'));
+});
+

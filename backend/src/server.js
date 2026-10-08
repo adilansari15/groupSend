@@ -16,16 +16,34 @@ import { errorHandler } from '../middleware/error.js';
 const app = express();
 const server = http.createServer(app);
 
-const clientOrigin = process.env.CLIENT_URL || 'http://localhost:5173';
+const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
+  .split(',')
+  .map(url => url.trim().replace(/\/+$/, ''))
+  .filter(Boolean);
+
+const corsOriginChecker = (origin, callback) => {
+  // Allow requests with no origin (like mobile apps, curl, or server-to-server)
+  if (!origin) return callback(null, true);
+  const cleanOrigin = origin.replace(/\/+$/, '');
+  if (
+    allowedOrigins.includes('*') ||
+    allowedOrigins.includes(cleanOrigin) ||
+    (allowedOrigins.some(ao => ao.includes('.vercel.app')) && cleanOrigin.endsWith('.vercel.app'))
+  ) {
+    return callback(null, true);
+  }
+  return callback(null, false);
+};
+
 app.use(cors({
-  origin: clientOrigin,
+  origin: corsOriginChecker,
   credentials: true
 }));
 app.use(express.json());
 
 const io = new Server(server, {
   cors: {
-    origin: clientOrigin,
+    origin: corsOriginChecker,
     methods: ['GET', 'POST'],
     credentials: true
   }

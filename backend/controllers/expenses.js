@@ -1,7 +1,7 @@
 import Group from '../models/Group.js';
 import Expense from '../models/Expense.js';
 import { validateExpense } from '../src/settlement.js';
-import { emitToGroup, createAndBroadcastNotification } from '../src/socket.js';
+import { emitToGroup, createAndBroadcastNotification, postSystemChatMessage } from '../src/socket.js';
 import { recordAuditLog } from '../src/audit.js';
 
 export async function listExpenses(req, res, next) {
@@ -85,6 +85,12 @@ export async function createExpense(req, res, next) {
     });
 
     emitToGroup(group._id, 'expense:created', expense);
+
+    // System chat message so everyone sees it in the group chat
+    await postSystemChatMessage(
+      group._id,
+      `💸 ${actorName} added a payment of ₹${rupeeAmount} for "${expense.title}"`
+    );
 
     res.status(201).json(expense);
   } catch (err) {

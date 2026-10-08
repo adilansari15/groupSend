@@ -1,6 +1,7 @@
 import Group from '../models/Group.js';
 import Settlement from '../models/Settlement.js';
-import { emitToGroup } from '../src/socket.js';
+import { emitToGroup, createAndBroadcastNotification, postSystemChatMessage } from '../src/socket.js';
+import { recordAuditLog } from '../src/audit.js';
 
 export async function listSettlements(req, res, next) {
   try {
@@ -65,6 +66,34 @@ export async function createSettlement(req, res, next) {
     };
 
     emitToGroup(group._id, 'settlement:created', result);
+
+    const actorName = req.user?.name || 'Someone';
+    const rupeeAmount = (amount / 100).toFixed(2).replace(/\.00$/, '');
+
+    // Notification broadcast
+    await createAndBroadcastNotification({
+      groupId: group._id,
+      type: 'settlement_completed',
+      actorId: req.user?._id || null,
+      actorName,
+      message: `${actorName} settled ₹${rupeeAmount} (${result.fromName} → ${result.toName})`,
+      metadata: { settlementId: settlement._id, amount }
+    });
+
+    // Audit log
+    await recordAuditLog({
+      action: 'settlement_completed',
+      actorId: req.user?._id || null,
+      actorName,
+      groupId: group._id,
+      payload: { settlementId: settlement._id, from: result.fromName, to: result.toName, amount }
+    });
+
+    // System chat message so everyone sees it in the group chat
+    await postSystemChatMessage(
+      group._id,
+      `✅ ${actorName} settled \u20b9${rupeeAmount} from ${result.fromName} to ${result.toName}`
+    );
 
     res.status(201).json(result);
   } catch (err) {
