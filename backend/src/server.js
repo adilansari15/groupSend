@@ -4,6 +4,8 @@ dotenv.config({ path: '../.env' });
 import http from 'http';
 import express from 'express';
 import cors from 'cors';
+import compression from 'compression';
+import helmet from 'helmet';
 import { Server } from 'socket.io';
 import { connectDB } from '../config/db.js';
 import { initSocket } from './socket.js';
@@ -15,6 +17,15 @@ import { errorHandler } from '../middleware/error.js';
 
 const app = express();
 const server = http.createServer(app);
+
+// Production security headers
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false
+}));
+
+// Gzip/deflate compression for all API responses
+app.use(compression());
 
 const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
   .split(',')

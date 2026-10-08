@@ -6,10 +6,13 @@ export async function getReports(req, res, next) {
     const { id } = req.params;
     const { period = 'monthly' } = req.query;
 
-    const group = await Group.findById(id);
+    const group = req.group || (await Group.findById(id));
     if (!group) return res.status(404).json({ error: 'Group not found' });
 
-    const expenses = await Expense.find({ groupId: id }).sort('-date -createdAt').lean();
+    const expenses = await Expense.find({ groupId: id })
+      .select('title amount category date payments createdAt')
+      .sort('-date -createdAt')
+      .lean();
     const memberMap = Object.fromEntries(group.members.map((m) => [String(m._id), m.name]));
 
     const now = new Date();

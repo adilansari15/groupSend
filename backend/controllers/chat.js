@@ -5,11 +5,11 @@ import { emitToGroup } from '../src/socket.js';
 export async function listChatMessages(req, res, next) {
   try {
     const { id } = req.params;
-    const group = await Group.findById(id);
+    const group = req.group || (await Group.findById(id));
     if (!group) return res.status(404).json({ error: 'Group not found' });
 
-    // Verify membership if user is authenticated
-    if (req.user) {
+    // Verify membership if user is authenticated and not already checked by middleware
+    if (req.user && !req.group) {
       const isMember = String(group.ownerId) === String(req.user._id) ||
         group.members.some((m) => m.userId && String(m.userId) === String(req.user._id));
       if (!isMember) {
@@ -37,7 +37,7 @@ export async function sendChatMessage(req, res, next) {
       return res.status(400).json({ error: 'Message cannot be empty' });
     }
 
-    const group = await Group.findById(id);
+    const group = req.group || (await Group.findById(id));
     if (!group) return res.status(404).json({ error: 'Group not found' });
 
     // Verify membership

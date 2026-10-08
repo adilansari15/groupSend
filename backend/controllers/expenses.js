@@ -7,10 +7,19 @@ import { recordAuditLog } from '../src/audit.js';
 export async function listExpenses(req, res, next) {
   try {
     const { id } = req.params;
-    const group = await Group.findById(id);
+    const group = req.group || (await Group.findById(id));
     if (!group) return res.status(404).json({ error: 'Group not found' });
 
-    const expenses = await Expense.find({ groupId: id }).sort('-date -createdAt');
+    let query = Expense.find({ groupId: id }).sort('-date -createdAt').lean();
+
+    // Optional pagination support
+    if (req.query.limit) {
+      const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 200);
+      const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+      query = query.skip((page - 1) * limit).limit(limit);
+    }
+
+    const expenses = await query;
     res.json(expenses);
   } catch (err) {
     next(err);
@@ -20,7 +29,7 @@ export async function listExpenses(req, res, next) {
 export async function createExpense(req, res, next) {
   try {
     const { id } = req.params;
-    const group = await Group.findById(id);
+    const group = req.group || (await Group.findById(id));
     if (!group) return res.status(404).json({ error: 'Group not found' });
 
     const { title, amount, category = 'Other', date = Date.now(), notes = '', payments = [], shares = [] } = req.body;

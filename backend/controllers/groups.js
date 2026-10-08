@@ -84,7 +84,7 @@ export const listGroups = async (req, res, next) => {
       userOrConditions.push({ 'members.email': userEmail });
     }
 
-    const groups = await Group.find({ $or: userOrConditions }).sort('-createdAt');
+    const groups = await Group.find({ $or: userOrConditions }).sort('-createdAt').lean();
     res.json(groups);
   } catch (err) {
     next(err);
@@ -315,12 +315,12 @@ export async function joinGroup(req, res, next) {
 
 export async function getBalances(req, res, next) {
   try {
-    const group = await Group.findById(req.params.id);
+    const group = req.group || (await Group.findById(req.params.id));
     if (!group) return res.status(404).json({ error: 'Group not found' });
 
     const [expenses, settlements] = await Promise.all([
-      Expense.find({ groupId: group._id }).lean(),
-      Settlement.find({ groupId: group._id }).lean()
+      Expense.find({ groupId: group._id }).select('payments shares').lean(),
+      Settlement.find({ groupId: group._id }).select('from to amount').lean()
     ]);
 
     const ids = group.members.map((m) => String(m._id));
@@ -345,12 +345,12 @@ export async function getBalances(req, res, next) {
 
 export async function getTransfers(req, res, next) {
   try {
-    const group = await Group.findById(req.params.id);
+    const group = req.group || (await Group.findById(req.params.id));
     if (!group) return res.status(404).json({ error: 'Group not found' });
 
     const [expenses, settlements] = await Promise.all([
-      Expense.find({ groupId: group._id }).lean(),
-      Settlement.find({ groupId: group._id }).lean()
+      Expense.find({ groupId: group._id }).select('payments shares').lean(),
+      Settlement.find({ groupId: group._id }).select('from to amount').lean()
     ]);
 
     const ids = group.members.map((m) => String(m._id));

@@ -6,7 +6,7 @@ import { recordAuditLog } from '../src/audit.js';
 export async function listSettlements(req, res, next) {
   try {
     const { id } = req.params;
-    const group = await Group.findById(id);
+    const group = req.group || (await Group.findById(id));
     if (!group) return res.status(404).json({ error: 'Group not found' });
 
     const settlements = await Settlement.find({ groupId: id }).sort('-date -createdAt').lean();
@@ -27,7 +27,7 @@ export async function listSettlements(req, res, next) {
 export async function createSettlement(req, res, next) {
   try {
     const { id } = req.params;
-    const group = await Group.findById(id);
+    const group = req.group || (await Group.findById(id));
     if (!group) return res.status(404).json({ error: 'Group not found' });
 
     const { from, to, amount, date = Date.now() } = req.body;

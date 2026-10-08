@@ -5,7 +5,7 @@ import AuditLog from '../models/AuditLog.js';
 export async function listNotifications(req, res, next) {
   try {
     const { id } = req.params;
-    const group = await Group.findById(id);
+    const group = req.group || (await Group.findById(id));
     if (!group) return res.status(404).json({ error: 'Group not found' });
 
     const notifications = await Notification.find({ groupId: id })
@@ -22,7 +22,7 @@ export async function listNotifications(req, res, next) {
 export async function listActivity(req, res, next) {
   try {
     const { id } = req.params;
-    const group = await Group.findById(id);
+    const group = req.group || (await Group.findById(id));
     if (!group) return res.status(404).json({ error: 'Group not found' });
 
     // Fetch both audit logs and notifications
